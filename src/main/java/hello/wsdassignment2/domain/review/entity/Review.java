@@ -1,7 +1,7 @@
 package hello.wsdassignment2.domain.review.entity;
 
 import hello.wsdassignment2.common.entity.BaseEntity;
-import hello.wsdassignment2.domain.book.Book;
+import hello.wsdassignment2.domain.book.entity.Book;
 import hello.wsdassignment2.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

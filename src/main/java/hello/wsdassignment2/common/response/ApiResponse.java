@@ -44,10 +44,11 @@ public class ApiResponse<T> {
     }
 
     // 페이지네이션 성공 응답
-    public static <T> ApiResponse<List<T>> success(Page<T> pageData) {
+    public static <T> ApiResponse<List<T>> successPage(Page<T> pageData) {
         PageMetadata metadata = new PageMetadata(pageData);
         return new ApiResponse<>(true, "200", "Success", pageData.getContent(), metadata, null, null);
     }
+
     // 에러 응답
     public static ApiResponse<Void> error(String code, String message, String path) {
         return new ApiResponse<>(false, code, message, null, null, null, path);

@@ -1,6 +1,6 @@
 package hello.wsdassignment2.domain.order.entity;
 
-import hello.wsdassignment2.domain.book.Book;
+import hello.wsdassignment2.domain.book.entity.Book;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
