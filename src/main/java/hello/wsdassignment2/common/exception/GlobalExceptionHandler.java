@@ -1,0 +1,81 @@
+package hello.wsdassignment2.common.exception;
+
+import hello.wsdassignment2.common.response.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
+@RestControllerAdvice
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+    // 커스텀 예외 처리
+    @ExceptionHandler(CustomException.class)
+    public ResponseEntity<ApiResponse<Void>> handleCustomException(CustomException e, HttpServletRequest request) {
+        ErrorCode errorCode = e.getErrorCode();
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(ApiResponse.error(
+                        errorCode.getCode(),
+                        errorCode.getMessage(),
+                        e.getDetail(), // 상세 정보가 있으면 출력, 없으면 null
+                        request.getRequestURI()
+                ));
+    }
+
+    // @Valid 유효성 검사 실패 처리
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request) {
+
+        // 필드별 에러 메세지를 Map에 담기
+        Map<String, String> errors = new HashMap<>();
+        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
+            errors.put(error.getField(), error.getDefaultMessage());
+        }
+
+        ErrorCode errorCode = ErrorCode.VALIDATION_FAILED;
+        String path = ((ServletWebRequest) request).getRequest().getRequestURI();
+
+        // errors 맵을 함께 전달
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(ApiResponse.error(
+                        errorCode.getCode(),
+                        errorCode.getMessage(),
+                        errors, // 상세 에러 정보 주입
+                        path
+                ));
+    }
+
+    // 그 외 모든 예외 처리
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Void>> handleAllException(Exception e, HttpServletRequest request) {
+        log.error("Unhandled Exception: ", e);
+
+        ErrorCode errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
+
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(ApiResponse.error(
+                        errorCode.getCode(),
+                        errorCode.getMessage(),
+                        request.getRequestURI()
+                ));
+    }
+}
