@@ -6,6 +6,8 @@ import hello.wsdassignment2.domain.book.dto.BookCreateRequest;
 import hello.wsdassignment2.domain.book.dto.BookUpdateRequest;
 import hello.wsdassignment2.domain.book.entity.Book;
 import hello.wsdassignment2.domain.book.repository.BookRepository;
+import hello.wsdassignment2.domain.review.entity.Review;
+import hello.wsdassignment2.domain.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class BookService {
 
     private final BookRepository bookRepository;
+    private final ReviewRepository reviewRepository;
 
     // 책 등록
     @Transactional
@@ -74,5 +77,12 @@ public class BookService {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "존재하지 않는 책입니다."));
         bookRepository.delete(book);
+    }
+    
+    // 특정 책의 리뷰 전체 조회
+    public Page<Review> getAllReviewsByBook(Long bookId, Pageable pageable) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "존재하지 않는 책입니다."));
+        return reviewRepository.findAllByBookAndDeletedAtIsNull(book, pageable);
     }
 }
