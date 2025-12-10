@@ -29,25 +29,34 @@ public class OrderService {
     // 주문 등록
     @Transactional
     public Long createOrder(OrderRequest request) {
+
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "존재하지 않는 사용자입니다."));
 
-        Book book = bookRepository.findById(request.getBookId())
-                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "존재하지 않는 책입니다."));
-
-        book.removeStock(request.getCount());
-
-        OrderItem orderItem = OrderItem.builder()
-                .book(book)
-                .quantity(request.getCount())
-                .priceAtOrder(book.getPrice())
-                .build();
-
         Order order = Order.builder()
                 .user(user)
-                .status(OrderStatus.PAID)
+                .status(OrderStatus.PENDING)
                 .build();
-        order.addOrderItem(orderItem);
+
+        for (OrderRequest.OrderItemDTO itemDto : request.getItems()) {
+
+            // 책 조회
+            Book book = bookRepository.findById(itemDto.getBookId())
+                    .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "존재하지 않는 책입니다."));
+
+            // 재고 차감
+            book.removeStock(itemDto.getCount());
+
+            // 주문 아이템 생성
+            OrderItem orderItem = OrderItem.builder()
+                    .book(book)
+                    .quantity(itemDto.getCount())
+                    .priceAtOrder(book.getPrice())
+                    .build();
+
+            // 주문에 추가
+            order.addOrderItem(orderItem);
+        }
 
         return orderRepository.save(order).getId();
     }
