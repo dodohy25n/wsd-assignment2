@@ -8,7 +8,6 @@ import hello.wsdassignment2.domain.review.dto.ReviewCreateRequest;
 import hello.wsdassignment2.domain.review.dto.ReviewUpdateRequest;
 import hello.wsdassignment2.domain.review.entity.Review;
 import hello.wsdassignment2.domain.review.repository.ReviewRepository;
-import hello.wsdassignment2.domain.user.entity.Role;
 import hello.wsdassignment2.domain.user.entity.User;
 import hello.wsdassignment2.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -220,30 +219,21 @@ class ReviewServiceTest {
 
 
     private User createUserEntity() {
-        return User.builder()
-                .email("test@example.com")
-                .password("password")
-                .role(Role.ROLE_USER)
-                .build();
+        return User.create("testuser", "password", "test@example.com", "Test User");
     }
 
     private Book createBookEntity() {
-        return Book.builder()
-                .title("Test Book")
-                .summary("A book for testing.")
-                .isbn("978-0-06-112008-4")
-                .price(new BigDecimal("19.99"))
-                .stockQuantity(100)
-                .build();
+        return Book.create(
+                "Test Book",
+                "A book for testing.",
+                "978-0-06-112008-4",
+                new BigDecimal("19.99"),
+                100
+        );
     }
 
     private Review createReviewEntity(User user, Book book) {
-        return Review.builder()
-                .user(user)
-                .book(book)
-                .rating(5)
-                .content("Excellent book!")
-                .build();
+        return Review.create(user, book, 5, "Excellent book!");
     }
 
     private ReviewCreateRequest createReviewCreateRequest(Long userId, Long bookId, Integer rating, String content) {

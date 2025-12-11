@@ -2,15 +2,14 @@ package hello.wsdassignment2.domain.order.entity;
 
 import hello.wsdassignment2.domain.book.entity.Book;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 
 @Entity
 @Getter
+@Builder
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OrderItem {
 
@@ -32,11 +31,12 @@ public class OrderItem {
     @Column(nullable = false)
     private BigDecimal priceAtOrder; // 주문 시점의 가격 저장 (가격 변동 대비)
 
-    @Builder
-    public OrderItem(Book book, int quantity, BigDecimal priceAtOrder) {
-        this.book = book;
-        this.quantity = quantity;
-        this.priceAtOrder = priceAtOrder;
+    public static OrderItem create(Book book, int quantity) {
+        return OrderItem.builder()
+                .book(book)
+                .quantity(quantity)
+                .priceAtOrder(book.getPrice())
+                .build();
     }
 
     protected void setOrder(Order order) {

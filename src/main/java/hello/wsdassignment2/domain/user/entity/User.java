@@ -2,16 +2,15 @@ package hello.wsdassignment2.domain.user.entity;
 
 import hello.wsdassignment2.common.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
 public class User extends BaseEntity {
 
     @Id
@@ -36,16 +35,24 @@ public class User extends BaseEntity {
 
     private LocalDateTime deletedAt;
 
-    @Builder
-    public User(String username, String email, String password, String name, Role role) {
-        this.username = username;
-        this.email = email;
-        this.password = password;
-        this.name = name;
-        this.role = role;
+    public static User create(String username, String password, String email, String name) {
+        return User.builder()
+                .username(username)
+                .password(password)
+                .email(email)
+                .name(name)
+                .role(Role.ROLE_USER)
+                .build();
     }
 
-    public void updateProfile(String name) {
-        this.name = name;
+    public static User createForAuthentication(Long id, String username, Role role) {
+        return User.builder()
+                .id(id)
+                .username(username)
+                .password("")
+                .email(username) // dummy unique value
+                .name("user") // dummy value
+                .role(role)
+                .build();
     }
 }

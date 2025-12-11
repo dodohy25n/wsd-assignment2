@@ -4,15 +4,14 @@ import hello.wsdassignment2.common.entity.BaseEntity;
 import hello.wsdassignment2.domain.book.entity.Book;
 import hello.wsdassignment2.domain.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
+@Builder
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Review extends BaseEntity {
 
@@ -36,12 +35,13 @@ public class Review extends BaseEntity {
 
     private LocalDateTime deletedAt;
 
-    @Builder
-    public Review(User user, Book book, Integer rating, String content) {
-        this.user = user;
-        this.book = book;
-        this.rating = rating;
-        this.content = content;
+    public static Review create(User user, Book book, Integer rating, String content) {
+        return Review.builder()
+                .user(user)
+                .book(book)
+                .rating(rating)
+                .content(content)
+                .build();
     }
 
     public void updateInfo(Integer rating, String content) {

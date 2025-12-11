@@ -4,15 +4,15 @@ import hello.wsdassignment2.common.entity.BaseEntity;
 import hello.wsdassignment2.common.exception.CustomException;
 import hello.wsdassignment2.common.exception.ErrorCode;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
+@Builder
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Book extends BaseEntity {
 
@@ -37,13 +37,14 @@ public class Book extends BaseEntity {
 
     private LocalDateTime deletedAt;
 
-    @Builder
-    public Book(String title, String summary, String isbn, BigDecimal price, Integer stockQuantity) {
-        this.title = title;
-        this.summary = summary;
-        this.isbn = isbn;
-        this.price = price;
-        this.stockQuantity = stockQuantity;
+    public static Book create(String title, String summary, String isbn, BigDecimal price, Integer stockQuantity) {
+        return Book.builder()
+                .title(title)
+                .summary(summary)
+                .isbn(isbn)
+                .price(price)
+                .stockQuantity(stockQuantity)
+                .build();
     }
 
     // 정보 수정 (재고 포함)

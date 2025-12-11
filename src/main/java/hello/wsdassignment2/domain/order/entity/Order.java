@@ -4,10 +4,7 @@ package hello.wsdassignment2.domain.order.entity;
 import hello.wsdassignment2.common.entity.BaseEntity;
 import hello.wsdassignment2.domain.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -16,6 +13,8 @@ import java.util.List;
 
 @Entity
 @Getter
+@Builder
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "orders")
 public class Order extends BaseEntity {
@@ -29,6 +28,7 @@ public class Order extends BaseEntity {
     private User user;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @Column(nullable = false)
@@ -38,11 +38,12 @@ public class Order extends BaseEntity {
     @Column(nullable = false)
     private OrderStatus status;
 
-    @Builder
-    public Order(User user, OrderStatus status) {
-        this.user = user;
-        this.status = status;
-        this.totalPrice = BigDecimal.ZERO;
+    public static Order create(User user) {
+        return Order.builder()
+                .user(user)
+                .status(OrderStatus.PENDING)
+                .totalPrice(BigDecimal.ZERO)
+                .build();
     }
 
     // 주문에 상품 추가 (연관관계 편의 메서드)

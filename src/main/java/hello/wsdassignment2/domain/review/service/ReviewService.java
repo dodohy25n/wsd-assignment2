@@ -34,12 +34,12 @@ public class ReviewService {
         Book book = bookRepository.findById(request.getBookId())
                 .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "존재하지 않는 책입니다."));
 
-        Review review = Review.builder()
-                .user(user)
-                .book(book)
-                .rating(request.getRating())
-                .content(request.getContent())
-                .build();
+        Review review = Review.create(
+                user,
+                book,
+                request.getRating(),
+                request.getContent()
+        );
 
         return reviewRepository.save(review).getId();
     }

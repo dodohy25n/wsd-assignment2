@@ -33,10 +33,7 @@ public class OrderService {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "존재하지 않는 사용자입니다."));
 
-        Order order = Order.builder()
-                .user(user)
-                .status(OrderStatus.PENDING)
-                .build();
+        Order order = Order.create(user);
 
         for (OrderRequest.OrderItemDTO itemDto : request.getItems()) {
 
@@ -48,11 +45,7 @@ public class OrderService {
             book.removeStock(itemDto.getCount());
 
             // 주문 아이템 생성
-            OrderItem orderItem = OrderItem.builder()
-                    .book(book)
-                    .quantity(itemDto.getCount())
-                    .priceAtOrder(book.getPrice())
-                    .build();
+            OrderItem orderItem = OrderItem.create(book, itemDto.getCount());
 
             // 주문에 추가
             order.addOrderItem(orderItem);

@@ -80,18 +80,14 @@ public class JwtTokenProvider {
             throw new RuntimeException("권한 정보가 없는 토큰입니다.");
         }
 
-        String userId = claims.getSubject();
+        String userIdStr = claims.getSubject();
         String username = claims.get("username", String.class);
         String role = claims.get(KEY_ROLE, String.class);
 
         Set<GrantedAuthority> authorities = Collections.singleton(new SimpleGrantedAuthority(role));
 
         // 토큰 정보로 가짜 사용자 객체 생성
-        User user = User.builder()
-                .username(username)
-                .role(Role.valueOf(role))
-                .password("")
-                .build();
+        User user = User.createForAuthentication(Long.parseLong(userIdStr), username, Role.valueOf(role));
 
         // 일반/소셜 공통 사용자 인증 객체 생성
         CustomUserDetails userDetails = new CustomUserDetails(user);

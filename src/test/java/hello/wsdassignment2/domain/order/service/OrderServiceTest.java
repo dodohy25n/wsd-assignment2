@@ -7,7 +7,6 @@ import hello.wsdassignment2.domain.order.dto.OrderRequest;
 import hello.wsdassignment2.domain.order.entity.Order;
 import hello.wsdassignment2.domain.order.entity.OrderStatus;
 import hello.wsdassignment2.domain.order.repository.OrderRepository;
-import hello.wsdassignment2.domain.user.entity.Role;
 import hello.wsdassignment2.domain.user.entity.User;
 import hello.wsdassignment2.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,11 +65,13 @@ class OrderServiceTest {
     @DisplayName("주문 등록 성공")
     void createOrder_Success() {
         // given
-        OrderRequest request = createOrderRequest(user.getId(), book.getId(), 5);
+        int orderCount = 5;
+        OrderRequest request = createOrderRequest(user.getId(), book.getId(), orderCount);
         int initialStock = book.getStockQuantity();
+        OrderRequest.OrderItemDTO itemDto = request.getItems().get(0);
 
         given(userRepository.findById(request.getUserId())).willReturn(Optional.of(user));
-        given(bookRepository.findById(request.getBookId())).willReturn(Optional.of(book));
+        given(bookRepository.findById(itemDto.getBookId())).willReturn(Optional.of(book));
         given(orderRepository.save(any(Order.class))).willReturn(order);
 
         // when
@@ -78,7 +79,7 @@ class OrderServiceTest {
 
         // then
         assertThat(orderId).isEqualTo(order.getId());
-        assertThat(book.getStockQuantity()).isEqualTo(initialStock - request.getCount());
+        assertThat(book.getStockQuantity()).isEqualTo(initialStock - orderCount);
     }
 
     @Test
@@ -100,8 +101,9 @@ class OrderServiceTest {
     void createOrder_Fail_BookNotFound() {
         // given
         OrderRequest request = createOrderRequest(user.getId(), 99L, 5);
+        OrderRequest.OrderItemDTO itemDto = request.getItems().get(0);
         given(userRepository.findById(request.getUserId())).willReturn(Optional.of(user));
-        given(bookRepository.findById(request.getBookId())).willReturn(Optional.empty());
+        given(bookRepository.findById(itemDto.getBookId())).willReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> orderService.createOrder(request))
@@ -115,8 +117,9 @@ class OrderServiceTest {
     void createOrder_Fail_OutOfStock() {
         // given
         OrderRequest request = createOrderRequest(user.getId(), book.getId(), 200); // More than stock
+        OrderRequest.OrderItemDTO itemDto = request.getItems().get(0);
         given(userRepository.findById(request.getUserId())).willReturn(Optional.of(user));
-        given(bookRepository.findById(request.getBookId())).willReturn(Optional.of(book));
+        given(bookRepository.findById(itemDto.getBookId())).willReturn(Optional.of(book));
 
         // when & then
         assertThatThrownBy(() -> orderService.createOrder(request))
@@ -220,34 +223,24 @@ class OrderServiceTest {
 
 
     private User createUserEntity() {
-        return User.builder()
-                .email("test@example.com")
-                .password("password")
-                .role(Role.ROLE_USER)
-                .build();
+        return User.create("testuser", "password", "test@example.com", "Test User");
     }
 
     private Book createBookEntity() {
-        return Book.builder()
-                .title("Test Book")
-                .summary("A book for testing.")
-                .isbn("978-0-06-112008-4")
-                .price(new BigDecimal("19.99"))
-                .stockQuantity(100)
-                .build();
+        return Book.create(
+                "Test Book",
+                "A book for testing.",
+                "978-0-06-112008-4",
+                new BigDecimal("19.99"),
+                100
+        );
     }
 
     private Order createOrderEntity(User user, Book book) {
-        Order newOrder = Order.builder()
-                .user(user)
-                .status(OrderStatus.PAID)
-                .build();
+        Order newOrder = Order.create(user);
+        newOrder.setStatus(OrderStatus.PAID);
         newOrder.addOrderItem(
-                hello.wsdassignment2.domain.order.entity.OrderItem.builder()
-                        .book(book)
-                        .quantity(10)
-                        .priceAtOrder(book.getPrice())
-                        .build()
+                hello.wsdassignment2.domain.order.entity.OrderItem.create(book, 10)
         );
         return newOrder;
     }
@@ -255,8 +248,12 @@ class OrderServiceTest {
     private OrderRequest createOrderRequest(Long userId, Long bookId, int count) {
         OrderRequest request = new OrderRequest();
         ReflectionTestUtils.setField(request, "userId", userId);
-        ReflectionTestUtils.setField(request, "bookId", bookId);
-        ReflectionTestUtils.setField(request, "count", count);
+
+        OrderRequest.OrderItemDTO itemDto = new OrderRequest.OrderItemDTO();
+        ReflectionTestUtils.setField(itemDto, "bookId", bookId);
+        ReflectionTestUtils.setField(itemDto, "count", count);
+
+        ReflectionTestUtils.setField(request, "items", List.of(itemDto));
         return request;
     }
 }

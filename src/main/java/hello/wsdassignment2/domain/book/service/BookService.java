@@ -29,13 +29,13 @@ public class BookService {
             throw new CustomException(ErrorCode.DUPLICATE_RESOURCE, "이미 등록된 ISBN 입니다.");
         }
 
-        Book book = Book.builder()
-                .title(request.getTitle())
-                .summary(request.getSummary())
-                .isbn(request.getIsbn())
-                .price(request.getPrice())
-                .stockQuantity(request.getStockQuantity())
-                .build();
+        Book book = Book.create(
+                request.getTitle(),
+                request.getSummary(),
+                request.getIsbn(),
+                request.getPrice(),
+                request.getStockQuantity()
+        );
 
         return bookRepository.save(book).getId();
     }

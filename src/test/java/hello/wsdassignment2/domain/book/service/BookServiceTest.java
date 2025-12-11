@@ -207,13 +207,13 @@ class BookServiceTest {
     }
 
     private Book createBookEntity() {
-        return Book.builder()
-                .title("Test Title")
-                .summary("Test Summary")
-                .isbn("123-123-123")
-                .price(BigDecimal.valueOf(10000))
-                .stockQuantity(100)
-                .build();
+        return Book.create(
+                "Test Title",
+                "Test Summary",
+                "123-123-123",
+                BigDecimal.valueOf(10000),
+                100
+        );
     }
 
     private BookCreateRequest createBookRequest() {
