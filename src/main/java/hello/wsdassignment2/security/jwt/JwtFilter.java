@@ -1,5 +1,6 @@
 package hello.wsdassignment2.security.jwt;
 
+import hello.wsdassignment2.common.exception.CustomException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

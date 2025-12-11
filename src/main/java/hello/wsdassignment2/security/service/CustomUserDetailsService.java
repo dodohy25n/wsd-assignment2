@@ -1,8 +1,5 @@
 package hello.wsdassignment2.security.service;
 
-import hello.wsdassignment2.common.exception.CustomException;
-import hello.wsdassignment2.common.exception.ErrorCode;
-import hello.wsdassignment2.domain.user.entity.User;
 import hello.wsdassignment2.domain.user.repository.UserRepository;
 import hello.wsdassignment2.security.details.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +15,8 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public CustomUserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        return new CustomUserDetails(user);
+        return userRepository.findByUsername(username)
+                .map(CustomUserDetails::new)
+                .orElseThrow(() -> new UsernameNotFoundException("해당 사용자를 찾을 수 없습니다."));
     }
 }

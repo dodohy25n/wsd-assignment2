@@ -11,6 +11,7 @@ import hello.wsdassignment2.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -29,14 +30,18 @@ public class AuthService {
 
     @Transactional
     public AuthTokens login(LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
-        );
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+            );
 
-        CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
-        User user = principal.getUser();
+            CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
+            User user = principal.getUser();
 
-        return generateTokenResponse(user);
+            return generateTokenResponse(user);
+        } catch (BadCredentialsException e) {
+            throw new CustomException(ErrorCode.LOGIN_FAILED);
+        }
     }
 
     @Transactional
