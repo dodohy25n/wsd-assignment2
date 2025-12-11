@@ -19,6 +19,9 @@ public class User extends BaseEntity {
     private Long id;
 
     @Column(nullable = false, unique = true)
+    private String username;
+
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
@@ -34,7 +37,8 @@ public class User extends BaseEntity {
     private LocalDateTime deletedAt;
 
     @Builder
-    public User(String email, String password, String name, Role role) {
+    public User(String username, String email, String password, String name, Role role) {
+        this.username = username;
         this.email = email;
         this.password = password;
         this.name = name;
