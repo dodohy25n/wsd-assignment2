@@ -5,6 +5,7 @@ import hello.wsdassignment2.domain.user.dto.AuthTokens;
 import hello.wsdassignment2.domain.user.dto.LoginRequest;
 import hello.wsdassignment2.domain.user.dto.LoginResponse;
 import hello.wsdassignment2.domain.user.service.AuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -20,7 +21,7 @@ public class AuthController {
     private final CookieUtil cookieUtil;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         AuthTokens authTokens = authService.login(request);
 
         ResponseCookie refreshCookie = cookieUtil.createRefreshTokenCookie(authTokens.getRefreshToken());

@@ -58,7 +58,7 @@ public class ReviewController {
     }
 
     // 리뷰 수정
-    @PutMapping("/reviews/{reviewId}")
+    @PutMapping("/{reviewId}")
     public ResponseEntity<ApiResponse<Void>> updateReview(@PathVariable Long reviewId,
                                                         @Valid @RequestBody ReviewUpdateRequest request) {
         reviewService.updateReview(reviewId, request);
@@ -66,14 +66,14 @@ public class ReviewController {
     }
 
     // 리뷰 Soft Delete
-    @DeleteMapping("/reviews/{reviewId}")
+    @DeleteMapping("/{reviewId}")
     public ResponseEntity<ApiResponse<Void>> softDeleteReview(@PathVariable Long reviewId) {
         reviewService.softDeleteReview(reviewId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     // 리뷰 Hard Delete
-    @DeleteMapping("/reviews/{reviewId}/hard")
+    @DeleteMapping("/{reviewId}/hard")
     public ResponseEntity<ApiResponse<Void>> hardDeleteReview(@PathVariable Long reviewId) {
         reviewService.hardDeleteReview(reviewId);
         return ResponseEntity.ok(ApiResponse.success(null));
