@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -26,23 +28,28 @@ public class Review extends BaseEntity {
     @JoinColumn(name = "book_id", nullable = false)
     private Book book;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = false)
+    private Integer rating; // 별점 (1~5)
+
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    @Column(nullable = false)
-    private int rating; // 1~5점
+    private LocalDateTime deletedAt;
 
     @Builder
-    public Review(User user, Book book, String content, int rating) {
+    public Review(User user, Book book, Integer rating, String content) {
         this.user = user;
         this.book = book;
-        this.content = content;
         this.rating = rating;
+        this.content = content;
     }
 
-    // 리뷰 수정
-    public void updateReview(String content, int rating) {
-        this.content = content;
+    public void updateInfo(Integer rating, String content) {
         this.rating = rating;
+        this.content = content;
+    }
+
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
     }
 }

@@ -10,12 +10,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "orders")
 public class Order extends BaseEntity {
 
     @Id
@@ -61,4 +63,7 @@ public class Order extends BaseEntity {
     public void cancel() {
         this.status = OrderStatus.CANCELLED;
     }
+    
+    // 주문 상태 변경
+    public void setStatus(OrderStatus status) { this.status = status; }
 }

@@ -6,6 +6,8 @@ import hello.wsdassignment2.domain.book.dto.BookResponse;
 import hello.wsdassignment2.domain.book.dto.BookUpdateRequest;
 import hello.wsdassignment2.domain.book.entity.Book;
 import hello.wsdassignment2.domain.book.service.BookService;
+import hello.wsdassignment2.domain.review.dto.ReviewResponse;
+import hello.wsdassignment2.domain.review.entity.Review;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -73,5 +75,16 @@ public class BookController {
     public ResponseEntity<ApiResponse<Void>> hardDeleteBook(@PathVariable Long bookId) {
         bookService.hardDeleteBook(bookId);
         return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    // 특정 책의 리뷰 목록 조회
+    @GetMapping("/reviews")
+    public ResponseEntity<ApiResponse<List<ReviewResponse>>> getAllReviewsByBook(
+            @PathVariable Long bookId,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        Page<Review> reviewPage = bookService.getAllReviewsByBook(bookId, pageable);
+        Page<ReviewResponse> responsePage = reviewPage.map(ReviewResponse::from);
+        return ResponseEntity.ok(ApiResponse.successPage(responsePage));
     }
 }

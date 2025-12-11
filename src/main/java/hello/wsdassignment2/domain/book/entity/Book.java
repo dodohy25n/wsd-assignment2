@@ -63,8 +63,7 @@ public class Book extends BaseEntity {
     public void removeStock(int quantity) {
         int restStock = this.stockQuantity - quantity;
         if (restStock < 0) {
-            // ErrorCode.OUT_OF_STOCK 이 있다면 사용, 없다면 재고 부족 메시지 처리
-            throw new CustomException(ErrorCode.OUT_OF_STOCK);
+            throw new CustomException(ErrorCode.STATE_CONFLICT, "재고가 부족합니다.");
         }
         this.stockQuantity = restStock;
     }

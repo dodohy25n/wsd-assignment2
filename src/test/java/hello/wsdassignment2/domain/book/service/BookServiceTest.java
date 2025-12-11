@@ -1,12 +1,10 @@
-package hello.wsdassignment2.domain.book;
+package hello.wsdassignment2.domain.book.service;
 
 import hello.wsdassignment2.common.exception.CustomException;
-import hello.wsdassignment2.common.exception.ErrorCode;
 import hello.wsdassignment2.domain.book.dto.BookCreateRequest;
 import hello.wsdassignment2.domain.book.dto.BookUpdateRequest;
 import hello.wsdassignment2.domain.book.entity.Book;
 import hello.wsdassignment2.domain.book.repository.BookRepository;
-import hello.wsdassignment2.domain.book.service.BookService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -66,7 +64,8 @@ class BookServiceTest {
         // when & then
         assertThatThrownBy(() -> bookService.createBook(request))
                 .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DUPLICATE_RESOURCE);
+                .extracting("detail")
+                .isEqualTo("이미 등록된 ISBN 입니다.");
     }
 
     @Test
@@ -94,9 +93,10 @@ class BookServiceTest {
         // when & then
         assertThatThrownBy(() -> bookService.getBook(bookId))
                 .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.RESOURCE_NOT_FOUND);
+                .extracting("detail")
+                .isEqualTo("존재하지 않는 책입니다.");
     }
-    
+
     @Test
     @DisplayName("책 목록 조회 성공")
     void getAllBooks_Success() {
@@ -143,7 +143,9 @@ class BookServiceTest {
 
         // when & then
         assertThatThrownBy(() -> bookService.updateBook(bookId, updateRequest))
-                .isInstanceOf(CustomException.class);
+                .isInstanceOf(CustomException.class)
+                .extracting("detail")
+                .isEqualTo("존재하지 않는 책입니다.");
     }
 
     @Test
@@ -170,7 +172,9 @@ class BookServiceTest {
 
         // when & then
         assertThatThrownBy(() -> bookService.softDeleteBook(bookId))
-                .isInstanceOf(CustomException.class);
+                .isInstanceOf(CustomException.class)
+                .extracting("detail")
+                .isEqualTo("존재하지 않는 책입니다.");
     }
 
     @Test
@@ -197,10 +201,11 @@ class BookServiceTest {
 
         // when & then
         assertThatThrownBy(() -> bookService.hardDeleteBook(bookId))
-                .isInstanceOf(CustomException.class);
+                .isInstanceOf(CustomException.class)
+                .extracting("detail")
+                .isEqualTo("존재하지 않는 책입니다.");
     }
 
-    // --- Helpers ---
     private Book createBookEntity() {
         return Book.builder()
                 .title("Test Title")
