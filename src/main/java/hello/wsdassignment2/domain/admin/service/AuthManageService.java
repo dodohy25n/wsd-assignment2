@@ -20,8 +20,21 @@ public class AuthManageService {
 
     // 특정 유저 리프레시 토큰 조회
 
-    public String getByUserId(Long userId) {
-        return redisTemplate.opsForValue().get(PREFIX + userId);
+    public RefreshTokenResponse getByUserId(Long userId) {
+        String key = PREFIX + userId;
+        String refreshToken = redisTemplate.opsForValue().get(key);
+
+        if (refreshToken == null) {
+            return null;
+        }
+
+        Long ttl = redisTemplate.getExpire(key);
+
+        return RefreshTokenResponse.builder()
+                .userId(userId)
+                .refreshToken(refreshToken)
+                .timeToLive(ttl)
+                .build();
     }
 
     // 특정 유저 리프레시 토큰 삭제
