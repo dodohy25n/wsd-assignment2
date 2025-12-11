@@ -1,5 +1,7 @@
 package hello.wsdassignment2.security.jwt;
 
+import hello.wsdassignment2.common.exception.CustomException;
+import hello.wsdassignment2.common.exception.ErrorCode;
 import hello.wsdassignment2.domain.user.entity.Role;
 import hello.wsdassignment2.domain.user.entity.User;
 import hello.wsdassignment2.security.details.CustomUserDetails;
@@ -98,20 +100,22 @@ public class JwtTokenProvider {
     /**
      * 토큰 유효성 검증
      */
-    public boolean validateToken(String token) {
+    public void validateToken(String token) {
         try {
             Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token);
-            return true;
         } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
             log.info("잘못된 JWT 서명입니다.");
+            throw new CustomException(ErrorCode.INVALID_TOKEN);
         } catch (ExpiredJwtException e) {
             log.info("만료된 JWT 토큰입니다.");
+            throw new CustomException(ErrorCode.TOKEN_EXPIRED);
         } catch (UnsupportedJwtException e) {
             log.info("지원되지 않는 JWT 토큰입니다.");
+            throw new CustomException(ErrorCode.INVALID_TOKEN);
         } catch (IllegalArgumentException e) {
             log.info("JWT 토큰이 잘못되었습니다.");
+            throw new CustomException(ErrorCode.INVALID_TOKEN);
         }
-        return false;
     }
 
     /**

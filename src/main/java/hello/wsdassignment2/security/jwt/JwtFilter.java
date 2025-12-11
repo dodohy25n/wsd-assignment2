@@ -32,13 +32,20 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String token = resolveToken(request);
 
-        if (token != null && jwtTokenProvider.validateToken(token)) {
-            // 인증 객체 생성
-            Authentication authentication = jwtTokenProvider.getAuthentication(token);
+        try {
+            if (token != null) {
+                jwtTokenProvider.validateToken(token);
+                // 인증 객체 생성
+                Authentication authentication = jwtTokenProvider.getAuthentication(token);
 
-            // SecurityContext에 저장
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                // SecurityContext에 저장
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+        } catch (CustomException e) {
+            // JWT 예외를 request attribute에 저장하여 ExceptionTranslationFilter에서 처리하도록 함
+            request.setAttribute("exception", e);
         }
+
 
         filterChain.doFilter(request, response);
     }

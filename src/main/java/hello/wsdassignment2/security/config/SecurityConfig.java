@@ -25,6 +25,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
@@ -74,6 +75,12 @@ public class SecurityConfig {
         // CORS 설정
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()));
+
+        // Exception Handling
+        http
+                .exceptionHandling((exceptions) -> exceptions
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                );
 
         //경로별 인가 작업
         http
