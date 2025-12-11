@@ -14,9 +14,6 @@ import java.util.List;
 @NoArgsConstructor
 public class OrderRequest {
 
-    @NotNull
-    private Long userId;
-
     @NotEmpty(message = "주문할 상품은 최소 1개 이상이어야 합니다.")
     @Valid // 리스트 내부의 객체들도 검증
     private List<OrderItemDTO> items;

@@ -3,7 +3,6 @@ package hello.wsdassignment2.domain.review.service;
 import hello.wsdassignment2.common.exception.CustomException;
 import hello.wsdassignment2.domain.book.entity.Book;
 import hello.wsdassignment2.domain.book.repository.BookRepository;
-import hello.wsdassignment2.domain.book.service.BookService;
 import hello.wsdassignment2.domain.review.dto.ReviewCreateRequest;
 import hello.wsdassignment2.domain.review.dto.ReviewUpdateRequest;
 import hello.wsdassignment2.domain.review.entity.Review;
@@ -38,9 +37,6 @@ class ReviewServiceTest {
     @InjectMocks
     private ReviewService reviewService;
 
-    @InjectMocks
-    private BookService bookService;
-
     @Mock
     private ReviewRepository reviewRepository;
 
@@ -70,13 +66,13 @@ class ReviewServiceTest {
     @DisplayName("리뷰 등록 성공")
     void createReview_Success() {
         // given
-        ReviewCreateRequest request = createReviewCreateRequest(user.getId(), book.getId(), 5, "Amazing book!");
-        given(userRepository.findById(request.getUserId())).willReturn(Optional.of(user));
+        ReviewCreateRequest request = createReviewCreateRequest(book.getId(), 5, "Amazing book!");
+        given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
         given(bookRepository.findById(request.getBookId())).willReturn(Optional.of(book));
         given(reviewRepository.save(any(Review.class))).willReturn(review);
 
         // when
-        Long reviewId = reviewService.createReview(request);
+        Long reviewId = reviewService.createReview(user.getId(), request);
 
         // then
         assertThat(reviewId).isEqualTo(review.getId());
@@ -86,11 +82,12 @@ class ReviewServiceTest {
     @DisplayName("리뷰 등록 실패: 사용자가 존재하지 않음")
     void createReview_Fail_UserNotFound() {
         // given
-        ReviewCreateRequest request = createReviewCreateRequest(99L, book.getId(), 5, "Amazing book!");
-        given(userRepository.findById(request.getUserId())).willReturn(Optional.empty());
+        Long nonExistentUserId = 99L;
+        ReviewCreateRequest request = createReviewCreateRequest(book.getId(), 5, "Amazing book!");
+        given(userRepository.findById(nonExistentUserId)).willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> reviewService.createReview(request))
+        assertThatThrownBy(() -> reviewService.createReview(nonExistentUserId, request))
                 .isInstanceOf(CustomException.class)
                 .extracting("detail") // detail 필드 검증
                 .isEqualTo("존재하지 않는 사용자입니다.");
@@ -100,12 +97,12 @@ class ReviewServiceTest {
     @DisplayName("리뷰 등록 실패: 책이 존재하지 않음")
     void createReview_Fail_BookNotFound() {
         // given
-        ReviewCreateRequest request = createReviewCreateRequest(user.getId(), 99L, 5, "Amazing book!");
-        given(userRepository.findById(request.getUserId())).willReturn(Optional.of(user));
+        ReviewCreateRequest request = createReviewCreateRequest(99L, 5, "Amazing book!");
+        given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
         given(bookRepository.findById(request.getBookId())).willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> reviewService.createReview(request))
+        assertThatThrownBy(() -> reviewService.createReview(user.getId(), request))
                 .isInstanceOf(CustomException.class)
                 .extracting("detail")
                 .isEqualTo("존재하지 않는 책입니다.");
@@ -155,25 +152,6 @@ class ReviewServiceTest {
     }
 
     @Test
-    @DisplayName("특정 책의 리뷰 목록 조회 성공")
-    void getAllReviewsByBook_Success() {
-        // given
-        PageRequest pageRequest = PageRequest.of(0, 10);
-        List<Review> reviews = List.of(review);
-        Page<Review> reviewPage = new PageImpl<>(reviews, pageRequest, reviews.size());
-
-        given(bookRepository.findById(book.getId())).willReturn(Optional.of(book));
-        given(reviewRepository.findAllByBookAndDeletedAtIsNull(book, pageRequest)).willReturn(reviewPage);
-
-        // when
-        Page<Review> result = bookService.getAllReviewsByBook(book.getId(), pageRequest);
-
-        // then
-        assertThat(result.getTotalElements()).isEqualTo(1);
-        assertThat(result.getContent().get(0)).isEqualTo(review);
-    }
-
-    @Test
     @DisplayName("리뷰 수정 성공")
     void updateReview_Success() {
         // given
@@ -187,6 +165,26 @@ class ReviewServiceTest {
         // then
         assertThat(review.getRating()).isEqualTo(request.getRating());
         assertThat(review.getContent()).isEqualTo(request.getContent());
+    }
+
+    @Test
+    @DisplayName("특정 책의 리뷰 목록 조회 성공")
+    void getAllReviewsByBook_Success() {
+        // given
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        List<Review> reviews = List.of(review);
+        Page<Review> reviewPage = new PageImpl<>(reviews, pageRequest, reviews.size());
+
+        given(bookRepository.findById(book.getId())).willReturn(Optional.of(book));
+        given(reviewRepository.findAllByBookAndDeletedAtIsNull(book, pageRequest)).willReturn(reviewPage);
+
+        // when
+        Page<Review> result = reviewService.getAllReviewsByBook(book.getId(), pageRequest);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getContent().get(0)).isEqualTo(review);
     }
 
     @Test
@@ -236,9 +234,8 @@ class ReviewServiceTest {
         return Review.create(user, book, 5, "Excellent book!");
     }
 
-    private ReviewCreateRequest createReviewCreateRequest(Long userId, Long bookId, Integer rating, String content) {
+    private ReviewCreateRequest createReviewCreateRequest(Long bookId, Integer rating, String content) {
         ReviewCreateRequest request = new ReviewCreateRequest();
-        ReflectionTestUtils.setField(request, "userId", userId);
         ReflectionTestUtils.setField(request, "bookId", bookId);
         ReflectionTestUtils.setField(request, "rating", rating);
         ReflectionTestUtils.setField(request, "content", content);

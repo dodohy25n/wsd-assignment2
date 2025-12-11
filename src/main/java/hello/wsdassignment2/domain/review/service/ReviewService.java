@@ -27,8 +27,8 @@ public class ReviewService {
 
     // 리뷰 등록
     @Transactional
-    public Long createReview(ReviewCreateRequest request) {
-        User user = userRepository.findById(request.getUserId())
+    public Long createReview(Long userId, ReviewCreateRequest request) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "존재하지 않는 사용자입니다."));
 
         Book book = bookRepository.findById(request.getBookId())
@@ -64,6 +64,13 @@ public class ReviewService {
     public void updateReview(Long reviewId, ReviewUpdateRequest request) {
         Review review = getReview(reviewId);
         review.updateInfo(request.getRating(), request.getContent());
+    }
+
+    // 특정 책의 리뷰 전체 조회
+    public Page<Review> getAllReviewsByBook(Long bookId, Pageable pageable) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "존재하지 않는 책입니다."));
+        return reviewRepository.findAllByBookAndDeletedAtIsNull(book, pageable);
     }
 
     // 리뷰 Soft Delete

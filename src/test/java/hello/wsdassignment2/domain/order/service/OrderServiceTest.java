@@ -66,16 +66,16 @@ class OrderServiceTest {
     void createOrder_Success() {
         // given
         int orderCount = 5;
-        OrderRequest request = createOrderRequest(user.getId(), book.getId(), orderCount);
+        OrderRequest request = createOrderRequest(book.getId(), orderCount);
         int initialStock = book.getStockQuantity();
         OrderRequest.OrderItemDTO itemDto = request.getItems().get(0);
 
-        given(userRepository.findById(request.getUserId())).willReturn(Optional.of(user));
+        given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
         given(bookRepository.findById(itemDto.getBookId())).willReturn(Optional.of(book));
         given(orderRepository.save(any(Order.class))).willReturn(order);
 
         // when
-        Long orderId = orderService.createOrder(request);
+        Long orderId = orderService.createOrder(user.getId(), request);
 
         // then
         assertThat(orderId).isEqualTo(order.getId());
@@ -86,11 +86,12 @@ class OrderServiceTest {
     @DisplayName("주문 등록 실패: 사용자가 존재하지 않음")
     void createOrder_Fail_UserNotFound() {
         // given
-        OrderRequest request = createOrderRequest(99L, book.getId(), 5);
-        given(userRepository.findById(request.getUserId())).willReturn(Optional.empty());
+        Long nonExistentUserId = 99L;
+        OrderRequest request = createOrderRequest(book.getId(), 5);
+        given(userRepository.findById(nonExistentUserId)).willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> orderService.createOrder(request))
+        assertThatThrownBy(() -> orderService.createOrder(nonExistentUserId, request))
                 .isInstanceOf(CustomException.class)
                 .extracting("detail") // detail 필드를 꺼내서 검증
                 .isEqualTo("존재하지 않는 사용자입니다.");
@@ -100,13 +101,13 @@ class OrderServiceTest {
     @DisplayName("주문 등록 실패: 책이 존재하지 않음")
     void createOrder_Fail_BookNotFound() {
         // given
-        OrderRequest request = createOrderRequest(user.getId(), 99L, 5);
+        OrderRequest request = createOrderRequest(99L, 5);
         OrderRequest.OrderItemDTO itemDto = request.getItems().get(0);
-        given(userRepository.findById(request.getUserId())).willReturn(Optional.of(user));
+        given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
         given(bookRepository.findById(itemDto.getBookId())).willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> orderService.createOrder(request))
+        assertThatThrownBy(() -> orderService.createOrder(user.getId(), request))
                 .isInstanceOf(CustomException.class)
                 .extracting("detail")
                 .isEqualTo("존재하지 않는 책입니다.");
@@ -116,13 +117,13 @@ class OrderServiceTest {
     @DisplayName("주문 등록 실패: 재고 부족")
     void createOrder_Fail_OutOfStock() {
         // given
-        OrderRequest request = createOrderRequest(user.getId(), book.getId(), 200); // More than stock
+        OrderRequest request = createOrderRequest(book.getId(), 200); // More than stock
         OrderRequest.OrderItemDTO itemDto = request.getItems().get(0);
-        given(userRepository.findById(request.getUserId())).willReturn(Optional.of(user));
+        given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
         given(bookRepository.findById(itemDto.getBookId())).willReturn(Optional.of(book));
 
         // when & then
-        assertThatThrownBy(() -> orderService.createOrder(request))
+        assertThatThrownBy(() -> orderService.createOrder(user.getId(), request))
                 .isInstanceOf(CustomException.class)
                 .extracting("detail")
                 .isEqualTo("재고가 부족합니다.");
@@ -245,9 +246,8 @@ class OrderServiceTest {
         return newOrder;
     }
 
-    private OrderRequest createOrderRequest(Long userId, Long bookId, int count) {
+    private OrderRequest createOrderRequest(Long bookId, int count) {
         OrderRequest request = new OrderRequest();
-        ReflectionTestUtils.setField(request, "userId", userId);
 
         OrderRequest.OrderItemDTO itemDto = new OrderRequest.OrderItemDTO();
         ReflectionTestUtils.setField(itemDto, "bookId", bookId);

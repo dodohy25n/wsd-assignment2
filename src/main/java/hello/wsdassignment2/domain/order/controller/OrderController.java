@@ -5,6 +5,7 @@ import hello.wsdassignment2.domain.order.dto.OrderRequest;
 import hello.wsdassignment2.domain.order.dto.OrderResponse;
 import hello.wsdassignment2.domain.order.entity.Order;
 import hello.wsdassignment2.domain.order.service.OrderService;
+import hello.wsdassignment2.security.details.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,8 +28,11 @@ public class OrderController {
 
     // 주문 등록
     @PostMapping
-    public ResponseEntity<ApiResponse<Long>> createOrder(@Valid @RequestBody OrderRequest request) {
-        Long orderId = orderService.createOrder(request);
+    public ResponseEntity<ApiResponse<Long>> createOrder(
+            @Valid @RequestBody OrderRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long orderId = orderService.createOrder(userDetails.getUser().getId(), request);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(orderId));

@@ -6,6 +6,7 @@ import hello.wsdassignment2.domain.review.dto.ReviewResponse;
 import hello.wsdassignment2.domain.review.dto.ReviewUpdateRequest;
 import hello.wsdassignment2.domain.review.entity.Review;
 import hello.wsdassignment2.domain.review.service.ReviewService;
+import hello.wsdassignment2.security.details.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,8 +29,11 @@ public class ReviewController {
 
     // 리뷰 등록
     @PostMapping
-    public ResponseEntity<ApiResponse<Long>> createReview(@Valid @RequestBody ReviewCreateRequest request) {
-        Long reviewId = reviewService.createReview(request);
+    public ResponseEntity<ApiResponse<Long>> createReview(
+            @Valid @RequestBody ReviewCreateRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long reviewId = reviewService.createReview(userDetails.getUser().getId(), request);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(reviewId));

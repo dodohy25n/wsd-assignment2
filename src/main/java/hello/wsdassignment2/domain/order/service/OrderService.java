@@ -28,9 +28,9 @@ public class OrderService {
 
     // 주문 등록
     @Transactional
-    public Long createOrder(OrderRequest request) {
+    public Long createOrder(Long userId, OrderRequest request) {
 
-        User user = userRepository.findById(request.getUserId())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "존재하지 않는 사용자입니다."));
 
         Order order = Order.create(user);
