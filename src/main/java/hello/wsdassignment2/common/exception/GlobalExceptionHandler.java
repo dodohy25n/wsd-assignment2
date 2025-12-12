@@ -13,7 +13,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
-
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -60,6 +61,36 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                         errorCode.getMessage(),
                         errors, // 상세 에러 정보 주입
                         path
+                ));
+    }
+
+    // [추가 1] 인증 실패 (401) - AuthenticationException
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<CommonResponse<Void>> handleAuthenticationException(AuthenticationException e, HttpServletRequest request) {
+        log.error("Authentication Error: {}", e.getMessage()); // 로그 남기기
+
+        ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(CommonResponse.error(
+                        errorCode.getCode(),
+                        errorCode.getMessage(), // "인증이 필요합니다."
+                        request.getRequestURI()
+                ));
+    }
+
+    // [추가 2] 권한 없음 (403) - AccessDeniedException
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<CommonResponse<Void>> handleAccessDeniedException(AccessDeniedException e, HttpServletRequest request) {
+        log.error("Access Denied: {}", e.getMessage());
+
+        ErrorCode errorCode = ErrorCode.FORBIDDEN;
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(CommonResponse.error(
+                        errorCode.getCode(),
+                        errorCode.getMessage(), // "접근 권한이 없습니다."
+                        request.getRequestURI()
                 ));
     }
 

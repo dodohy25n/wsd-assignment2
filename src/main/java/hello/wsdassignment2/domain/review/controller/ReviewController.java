@@ -76,13 +76,13 @@ public class ReviewController {
             @ApiResponse(responseCode = "200", description = "리뷰 목록 조회 성공", useReturnTypeSchema = true)
     })
     @GetMapping
-    public ResponseEntity<PagedResponse<ReviewResponse>> getAllReviews( // 변경됨
+    public ResponseEntity<PagedResponse<ReviewResponse>> getAllReviews(
                                                                         @ParameterObject @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         Page<Review> reviewPage = reviewService.getAllReviews(pageable);
         Page<ReviewResponse> responsePage = reviewPage.map(ReviewResponse::from);
 
-        return ResponseEntity.ok(PagedResponse.success(responsePage)); // 변경됨
+        return ResponseEntity.ok(PagedResponse.success(responsePage));
     }
 
     @Operation(summary = "리뷰 수정", description = "기존 리뷰를 수정합니다.")

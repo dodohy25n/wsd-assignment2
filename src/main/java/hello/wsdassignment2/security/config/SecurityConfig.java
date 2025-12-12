@@ -1,7 +1,10 @@
 package hello.wsdassignment2.security.config;
 
 import hello.wsdassignment2.security.jwt.JwtFilter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -20,6 +23,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+@Data
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -80,7 +84,8 @@ public class SecurityConfig {
         // Exception Handling
         http
                 .exceptionHandling((exceptions) -> exceptions
-                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .authenticationEntryPoint(authenticationEntryPoint) // 401 발생 시 
+                        .accessDeniedHandler(authenticationEntryPoint)  // 403 발생 시
                 );
 
         //경로별 인가 작업

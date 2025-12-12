@@ -79,17 +79,25 @@ public class JwtTokenProvider {
         Claims claims = parseClaims(token);
 
         if (claims == null) {
-            throw new RuntimeException("권한 정보가 없는 토큰입니다.");
+            throw new CustomException(ErrorCode.INVALID_TOKEN); // 클레임 파싱 실패 시 처리
         }
 
         String userIdStr = claims.getSubject();
         String username = claims.get("username", String.class);
-        String role = claims.get(KEY_ROLE, String.class);
+        String roleString = claims.get(KEY_ROLE, String.class);
 
-        Set<GrantedAuthority> authorities = Collections.singleton(new SimpleGrantedAuthority(role));
+        Role role;
+        try {
+            role = Role.valueOf(roleString);
+        } catch (IllegalArgumentException e) {
+            log.info("유효하지 않은 역할 문자열입니다: {}", roleString);
+            throw new CustomException(ErrorCode.INVALID_TOKEN);
+        }
+
+        Set<GrantedAuthority> authorities = Collections.singleton(new SimpleGrantedAuthority(role.name()));
 
         // 토큰 정보로 가짜 사용자 객체 생성
-        User user = User.createForAuthentication(Long.parseLong(userIdStr), username, Role.valueOf(role));
+        User user = User.createForAuthentication(Long.parseLong(userIdStr), username, role);
 
         // 일반/소셜 공통 사용자 인증 객체 생성
         CustomUserDetails userDetails = new CustomUserDetails(user);

@@ -1,57 +1,42 @@
 package hello.wsdassignment2.security.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import hello.wsdassignment2.common.exception.CustomException;
-import hello.wsdassignment2.common.exception.ErrorCode;
-import hello.wsdassignment2.common.response.CommonResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
-public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
+public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint, AccessDeniedHandler {
 
-    private final ObjectMapper objectMapper;
+    private final HandlerExceptionResolver resolver;
 
+    public CustomAuthenticationEntryPoint(@Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver) {
+        this.resolver = resolver;
+    }
+
+    // 인증 실패 (401) 처리 -> GlobalExceptionHandler로 토스
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        log.error("Authentication Error: ", authException);
-
-        Object exception = request.getAttribute("exception");
-        if (exception instanceof CustomException) {
-            handleCustomException((CustomException) exception, response, request.getRequestURI());
-        } else {
-            handleAuthenticationException(response, request.getRequestURI());
-        }
+    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
+            throws IOException, ServletException {
+        // null을 넘기면 DispatcherServlet이 알아서 핸들러를 찾음
+        resolver.resolveException(request, response, null, authException);
     }
 
-    private void handleCustomException(CustomException e, HttpServletResponse response, String requestURI) throws IOException {
-        ErrorCode errorCode = e.getErrorCode();
-        CommonResponse<Void> errorResponse = CommonResponse.error(errorCode.getCode(), errorCode.getMessage(), requestURI);
-
-        response.setStatus(errorCode.getHttpStatus().value());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setCharacterEncoding("UTF-8");
-        objectMapper.writeValue(response.getWriter(), errorResponse);
-    }
-
-    private void handleAuthenticationException(HttpServletResponse response, String requestURI) throws IOException {
-        ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
-        CommonResponse<Void> errorResponse = CommonResponse.error(errorCode.getCode(), errorCode.getMessage(), requestURI);
-
-        response.setStatus(errorCode.getHttpStatus().value());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setCharacterEncoding("UTF-8");
-        objectMapper.writeValue(response.getWriter(), errorResponse);
+    // 인가 실패 (403) 처리 -> GlobalExceptionHandler로 토스
+    @Override
+    public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException)
+            throws IOException, ServletException {
+        resolver.resolveException(request, response, null, accessDeniedException);
     }
 }
