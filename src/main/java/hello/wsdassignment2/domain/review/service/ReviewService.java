@@ -2,6 +2,7 @@ package hello.wsdassignment2.domain.review.service;
 
 import hello.wsdassignment2.common.exception.CustomException;
 import hello.wsdassignment2.common.exception.ErrorCode;
+import hello.wsdassignment2.domain.book.dto.BookStatResponse;
 import hello.wsdassignment2.domain.book.entity.Book;
 import hello.wsdassignment2.domain.book.repository.BookRepository;
 import hello.wsdassignment2.domain.review.dto.ReviewCreateRequest;
@@ -86,5 +87,16 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "존재하지 않는 리뷰입니다."));
         reviewRepository.delete(review);
+    }
+
+    // 특정 책의 리뷰 평점 조회
+    public BookStatResponse getBookStat(Long bookId) {
+        // 책 존재 여부 확인 (404 처리)
+        if (!bookRepository.existsById(bookId)) {
+            throw new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "존재하지 않는 책입니다.");
+        }
+
+        // 한 번의 쿼리로 통계 조회 (DTO 내부에서 반올림 처리됨)
+        return reviewRepository.findStatByBookId(bookId);
     }
 }

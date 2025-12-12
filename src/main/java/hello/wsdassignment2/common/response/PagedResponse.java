@@ -30,7 +30,7 @@ public class PagedResponse<T> extends CommonResponse<List<T>> {
     @Schema(description = "페이지네이션 메타데이터")
     public static class PageMetadata {
         @Schema(description = "현재 페이지 번호", example = "1")
-        private final int pageNumber;
+        private final int page;
         @Schema(description = "페이지 크기", example = "10")
         private final int size;
         @Schema(description = "전체 요소 개수", example = "100")
@@ -39,7 +39,7 @@ public class PagedResponse<T> extends CommonResponse<List<T>> {
         private final int totalPages;
 
         public PageMetadata(Page<?> page) {
-            this.pageNumber = page.getNumber() + 1;
+            this.page = page.getNumber() + 1;
             this.size = page.getSize();
             this.totalElements = page.getTotalElements();
             this.totalPages = page.getTotalPages();

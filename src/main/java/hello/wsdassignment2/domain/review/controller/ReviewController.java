@@ -124,7 +124,7 @@ public class ReviewController {
         return ResponseEntity.ok(CommonResponse.success(null));
     }
 
-    @Operation(summary = "리뷰 Hard Delete (Admin)", description = "리뷰를 물리적으로 삭제합니다. (관리자 권한 필요)")
+    @Operation(summary = "리뷰 Hard Delete ", description = "리뷰를 물리적으로 삭제합니다. (관리자 권한 필요)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "리뷰 완전 삭제 성공", useReturnTypeSchema = true),
             @ApiResponse(responseCode = "403", description = "접근 권한 없음",

@@ -1,6 +1,7 @@
 package hello.wsdassignment2.domain.review.service;
 
 import hello.wsdassignment2.common.exception.CustomException;
+import hello.wsdassignment2.domain.book.dto.BookStatResponse;
 import hello.wsdassignment2.domain.book.entity.Book;
 import hello.wsdassignment2.domain.book.repository.BookRepository;
 import hello.wsdassignment2.domain.review.dto.ReviewCreateRequest;
@@ -214,6 +215,44 @@ class ReviewServiceTest {
         // then
         verify(reviewRepository).delete(review);
     }
+
+
+    @Test
+    @DisplayName("특정 책의 리뷰 통계 조회 성공")
+    void getBookStat_Success() {
+        // given
+        Long bookId = book.getId();
+        // Repository에서 반환할 Mock 객체 생성
+        BookStatResponse mockStat = new BookStatResponse(4.5, 10L);
+
+        // findById 대신 existsById 사용하도록 변경됨
+        given(bookRepository.existsById(bookId)).willReturn(true);
+        given(reviewRepository.findStatByBookId(bookId)).willReturn(mockStat);
+
+        // when
+        BookStatResponse result = reviewService.getBookStat(bookId);
+
+        // then
+        assertThat(result.getAverageRating()).isEqualTo(4.5);
+        assertThat(result.getReviewCount()).isEqualTo(10L);
+    }
+
+    @Test
+    @DisplayName("특정 책의 리뷰 통계 조회 실패: 존재하지 않는 책")
+    void getBookStat_Fail_BookNotFound() {
+        // given
+        Long nonExistentBookId = 99L;
+        // existsById가 false 반환
+        given(bookRepository.existsById(nonExistentBookId)).willReturn(false);
+
+        // when & then
+        assertThatThrownBy(() -> reviewService.getBookStat(nonExistentBookId))
+                .isInstanceOf(CustomException.class)
+                .extracting("detail")
+                .isEqualTo("존재하지 않는 책입니다.");
+    }
+
+
 
 
     private User createUserEntity() {

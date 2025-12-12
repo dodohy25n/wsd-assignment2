@@ -27,7 +27,7 @@ import java.util.Optional;
 public class AuthManageController {
     private final AuthManageService authManageService;
 
-    @Operation(summary = "전체 리프레시 토큰 목록 조회 (Admin)", description = "시스템에 저장된 모든 리프레시 토큰 목록을 조회합니다.")
+    @Operation(summary = "전체 리프레시 토큰 목록 조회 ", description = "시스템에 저장된 모든 리프레시 토큰 목록을 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "토큰 목록 조회 성공", useReturnTypeSchema = true),
             @ApiResponse(responseCode = "403", description = "접근 권한 없음",
@@ -39,7 +39,7 @@ public class AuthManageController {
         return ResponseEntity.ok(CommonResponse.success(tokens));
     }
 
-    @Operation(summary = "특정 유저 리프레시 토큰 조회 (Admin)", description = "사용자 ID로 특정 사용자의 리프레시 토큰을 조회합니다.")
+    @Operation(summary = "특정 유저 리프레시 토큰 조회 ", description = "사용자 ID로 특정 사용자의 리프레시 토큰을 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "토큰 조회 성공", useReturnTypeSchema = true),
             @ApiResponse(responseCode = "403", description = "접근 권한 없음",
@@ -55,7 +55,7 @@ public class AuthManageController {
         return ResponseEntity.ok(CommonResponse.success(token));
     }
 
-    @Operation(summary = "특정 유저 리프레시 토큰 삭제 (Admin)", description = "사용자 ID로 특정 사용자의 리프레시 토큰을 삭제합니다.")
+    @Operation(summary = "특정 유저 리프레시 토큰 삭제 ", description = "사용자 ID로 특정 사용자의 리프레시 토큰을 삭제합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "토큰 삭제 성공", useReturnTypeSchema = true),
             @ApiResponse(responseCode = "403", description = "접근 권한 없음",
