@@ -18,6 +18,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -30,16 +36,30 @@ public class OrderService {
     @Transactional
     public Long createOrder(Long userId, OrderRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 요청 내 동일 bookId 병합
+        Map<Long, Integer> requestedCounts = request.getItems().stream()
+                .collect(Collectors.toMap(
+                        OrderRequest.OrderItemDTO::getBookId,
+                        OrderRequest.OrderItemDTO::getCount,
+                        Integer::sum
+                ));
+
+        // 책 일괄 조회 (비관적 락)
+        Map<Long, Book> bookMap = bookRepository.findAllByIdForUpdate(requestedCounts.keySet()).stream()
+                .collect(Collectors.toMap(Book::getId, Function.identity()));
 
         Order order = Order.create(user);
 
-        for (OrderRequest.OrderItemDTO itemDto : request.getItems()) {
-            Book book = bookRepository.findById(itemDto.getBookId())
-                    .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "존재하지 않는 책입니다."));
-            book.removeStock(itemDto.getCount());
-            OrderItem orderItem = OrderItem.create(book, itemDto.getCount());
-            order.addOrderItem(orderItem);
+        for (Map.Entry<Long, Integer> entry : requestedCounts.entrySet()) {
+            Book book = bookMap.get(entry.getKey());
+            if (book == null) {
+                throw new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "존재하지 않는 책입니다.");
+            }
+
+            book.removeStock(entry.getValue());
+            order.addOrderItem(OrderItem.create(book, entry.getValue()));
         }
 
         return orderRepository.save(order).getId();
@@ -76,47 +96,105 @@ public class OrderService {
     @Transactional
     public void updateOrder(Long userId, Long orderId, OrderUpdateRequest request) {
         Order order = getOrder(orderId);
+        validateOrderModification(order, userId);
 
-        if (!order.isOwnedBy(userId)) {
-            throw new CustomException(ErrorCode.FORBIDDEN, "주문을 수정할 권한이 없습니다.");
-        }
+        validateUpdateRequest(request);
 
-        if (order.getStatus() != OrderStatus.PENDING) {
-            throw new CustomException(ErrorCode.STATE_CONFLICT, "대기중인 주문만 수정할 수 있습니다.");
-        }
+        // 주문 아이템 캐싱
+        Map<Long, OrderItem> itemById = order.getOrderItems().stream()
+                .collect(Collectors.toMap(OrderItem::getId, Function.identity()));
 
+        /* ---------- 삭제 ---------- */
         if (request.getOrderItemIdsToDelete() != null) {
-            for (Long orderItemId : request.getOrderItemIdsToDelete()) {
-                OrderItem orderItem = order.findOrderItemById(orderItemId);
-                orderItem.getBook().addStock(orderItem.getQuantity());
-                order.removeOrderItem(orderItem);
+            for (Long itemId : request.getOrderItemIdsToDelete()) {
+                OrderItem item = getItemOrThrow(itemById, itemId);
+                item.getBook().addStock(item.getQuantity());
+                order.removeOrderItem(item);
             }
         }
 
+        /* ---------- 수량 변경 ---------- */
         if (request.getItemsToUpdate() != null) {
-            for (OrderUpdateRequest.ItemToUpdate itemUpdate : request.getItemsToUpdate()) {
-                OrderItem orderItem = order.findOrderItemById(itemUpdate.getOrderItemId());
-                int quantityDiff = itemUpdate.getCount() - orderItem.getQuantity();
+            for (OrderUpdateRequest.ItemToUpdate dto : request.getItemsToUpdate()) {
+                OrderItem item = getItemOrThrow(itemById, dto.getOrderItemId());
+                int diff = dto.getCount() - item.getQuantity();
 
-                if (quantityDiff > 0) {
-                    orderItem.getBook().removeStock(quantityDiff);
-                } else {
-                    orderItem.getBook().addStock(-quantityDiff);
-                }
-                orderItem.updateQuantity(itemUpdate.getCount());
+                if (diff > 0) item.getBook().removeStock(diff);
+                if (diff < 0) item.getBook().addStock(-diff);
+
+                item.updateQuantity(dto.getCount());
             }
         }
 
+        /* ---------- 추가 / 병합 ---------- */
         if (request.getItemsToAdd() != null) {
-            for (OrderUpdateRequest.ItemToAdd itemAdd : request.getItemsToAdd()) {
-                Book book = bookRepository.findById(itemAdd.getBookId())
-                        .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "존재하지 않는 책입니다."));
-                book.removeStock(itemAdd.getCount());
-                OrderItem newOrderItem = OrderItem.create(book, itemAdd.getCount());
-                order.addOrderItem(newOrderItem);
+            Map<Long, OrderItem> itemByBookId = order.getOrderItems().stream()
+                    .collect(Collectors.toMap(
+                            item -> item.getBook().getId(),
+                            Function.identity()
+                    ));
+
+            Map<Long, Integer> addCounts = request.getItemsToAdd().stream()
+                    .collect(Collectors.toMap(
+                            OrderUpdateRequest.ItemToAdd::getBookId,
+                            OrderUpdateRequest.ItemToAdd::getCount,
+                            Integer::sum
+                    ));
+
+            Map<Long, Book> bookMap = bookRepository.findAllByIdForUpdate(addCounts.keySet()).stream()
+                    .collect(Collectors.toMap(Book::getId, Function.identity()));
+
+            for (Map.Entry<Long, Integer> entry : addCounts.entrySet()) {
+                Book book = bookMap.get(entry.getKey());
+                if (book == null) {
+                    throw new CustomException(ErrorCode.RESOURCE_NOT_FOUND);
+                }
+
+                book.removeStock(entry.getValue());
+
+                if (itemByBookId.containsKey(book.getId())) {
+                    itemByBookId.get(book.getId()).addQuantity(entry.getValue());
+                } else {
+                    order.addOrderItem(OrderItem.create(book, entry.getValue()));
+                }
             }
         }
 
         order.calculateTotalPrice();
+    }
+
+
+    private void validateOrderModification(Order order, Long userId) {
+        if (!order.isOwnedBy(userId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN, "주문을 수정할 권한이 없습니다.");
+        }
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new CustomException(ErrorCode.STATE_CONFLICT, "대기중인 주문만 수정할 수 있습니다.");
+        }
+    }
+
+    private void validateUpdateRequest(OrderUpdateRequest request) {
+        if ((request.getItemsToAdd() == null || request.getItemsToAdd().isEmpty()) &&
+                (request.getItemsToUpdate() == null || request.getItemsToUpdate().isEmpty()) &&
+                (request.getOrderItemIdsToDelete() == null || request.getOrderItemIdsToDelete().isEmpty())) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "변경 사항이 없습니다.");
+        }
+
+        if (request.getItemsToUpdate() != null && request.getOrderItemIdsToDelete() != null) {
+            Set<Long> deleteIds = new HashSet<>(request.getOrderItemIdsToDelete());
+            for (OrderUpdateRequest.ItemToUpdate dto : request.getItemsToUpdate()) {
+                if (deleteIds.contains(dto.getOrderItemId())) {
+                    throw new CustomException(ErrorCode.VALIDATION_FAILED, "삭제 대상은 수정할 수 없습니다.");
+                }
+            }
+        }
+    }
+
+    private OrderItem getItemOrThrow(Map<Long, OrderItem> map, Long id) {
+        OrderItem item = map.get(id);
+        if (item == null) {
+            throw new CustomException(ErrorCode.RESOURCE_NOT_FOUND);
+        }
+        return item;
     }
 }

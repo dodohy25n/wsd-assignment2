@@ -12,6 +12,7 @@ import java.util.List;
 
 @Schema(description = "주문 수정 요청")
 @Getter
+@Setter
 @NoArgsConstructor
 public class OrderUpdateRequest {
 

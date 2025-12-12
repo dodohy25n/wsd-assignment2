@@ -7,6 +7,15 @@ import lombok.*;
 import java.math.BigDecimal;
 
 @Entity
+@Table(
+    name = "order_item",
+    uniqueConstraints = {
+        @UniqueConstraint(
+                name = "uk_order_item_order_book",
+                columnNames = {"order_id", "book_id"}
+        )
+    }
+)
 @Getter
 @Builder
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
@@ -45,5 +54,9 @@ public class OrderItem {
 
     public void updateQuantity(int quantity) {
         this.quantity = quantity;
+    }
+
+    public void addQuantity(int count) {
+        this.quantity += count;
     }
 }
