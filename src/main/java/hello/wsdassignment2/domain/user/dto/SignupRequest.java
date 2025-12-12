@@ -3,11 +3,13 @@ package hello.wsdassignment2.domain.user.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
+@AllArgsConstructor
 public class SignupRequest {
 
     @NotBlank(message = "이메일을 입력해주세요.")

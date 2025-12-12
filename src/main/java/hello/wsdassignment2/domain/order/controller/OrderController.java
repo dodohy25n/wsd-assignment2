@@ -5,6 +5,7 @@ import hello.wsdassignment2.common.response.ErrorResponse;
 import hello.wsdassignment2.common.response.PagedResponse;
 import hello.wsdassignment2.domain.order.dto.OrderRequest;
 import hello.wsdassignment2.domain.order.dto.OrderResponse;
+import hello.wsdassignment2.domain.order.dto.OrderUpdateRequest;
 import hello.wsdassignment2.domain.order.entity.Order;
 import hello.wsdassignment2.domain.order.service.OrderService;
 import hello.wsdassignment2.security.details.CustomUserDetails;
@@ -99,6 +100,24 @@ public class OrderController {
     public ResponseEntity<CommonResponse<Void>> deleteOrder(
             @Parameter(description = "취소할 주문 ID", required = true) @PathVariable Long orderId) {
         orderService.deleteOrder(orderId);
+        return ResponseEntity.ok(CommonResponse.success(null));
+    }
+
+    @Operation(summary = "주문 수정", description = "대기중(PENDING)인 주문의 상품 수량 변경, 추가, 삭제를 처리합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "주문 수정 성공", useReturnTypeSchema = true),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "주문 수정 권한 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 주문/상품/책", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "수정할 수 없는 주문 상태(대기중이 아님) 또는 재고 부족", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PatchMapping("/{orderId}")
+    public ResponseEntity<CommonResponse<Void>> updateOrder(
+            @Parameter(description = "수정할 주문 ID", required = true) @PathVariable Long orderId,
+            @Parameter(description = "주문 수정 요청 정보", required = true) @Valid @RequestBody OrderUpdateRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        orderService.updateOrder(userDetails.getUser().getId(), orderId, request);
         return ResponseEntity.ok(CommonResponse.success(null));
     }
 }

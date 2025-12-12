@@ -5,6 +5,7 @@ import hello.wsdassignment2.domain.book.entity.Book;
 import hello.wsdassignment2.domain.book.repository.BookRepository;
 import hello.wsdassignment2.domain.order.dto.OrderRequest;
 import hello.wsdassignment2.domain.order.entity.Order;
+import hello.wsdassignment2.domain.order.entity.OrderItem;
 import hello.wsdassignment2.domain.order.entity.OrderStatus;
 import hello.wsdassignment2.domain.order.repository.OrderRepository;
 import hello.wsdassignment2.domain.user.entity.User;
@@ -197,7 +198,7 @@ class OrderServiceTest {
     void deleteOrder_Fail_AlreadyShipped() {
         // given
         Long orderId = 1L;
-        order.setStatus(OrderStatus.SHIPPED);
+        order.updateStatus(OrderStatus.SHIPPED);
         given(orderRepository.findById(orderId)).willReturn(Optional.of(order));
 
         // when & then
@@ -212,7 +213,7 @@ class OrderServiceTest {
     void deleteOrder_Fail_AlreadyCancelled() {
         // given
         Long orderId = 1L;
-        order.setStatus(OrderStatus.CANCELLED);
+        order.updateStatus(OrderStatus.CANCELLED);
         given(orderRepository.findById(orderId)).willReturn(Optional.of(order));
 
         // when & then
@@ -239,7 +240,7 @@ class OrderServiceTest {
 
     private Order createOrderEntity(User user, Book book) {
         Order newOrder = Order.create(user);
-        newOrder.setStatus(OrderStatus.PAID);
+        newOrder.updateStatus(OrderStatus.PAID);
         newOrder.addOrderItem(
                 hello.wsdassignment2.domain.order.entity.OrderItem.create(book, 10)
         );
@@ -256,4 +257,116 @@ class OrderServiceTest {
         ReflectionTestUtils.setField(request, "items", List.of(itemDto));
         return request;
     }
+
+    @Test
+    @DisplayName("주문 수정 성공 - 상품 수량 변경")
+    void updateOrder_Success_UpdateQuantity() {
+        // given
+        order.updateStatus(OrderStatus.PENDING); // 테스트를 위해 PENDING 상태로 설정
+        OrderItem orderItem = order.getOrderItems().get(0);
+        ReflectionTestUtils.setField(orderItem, "id", 1L);
+        int originalQuantity = orderItem.getQuantity();
+        int newQuantity = originalQuantity + 2;
+        int stockChange = newQuantity - originalQuantity;
+
+        hello.wsdassignment2.domain.order.dto.OrderUpdateRequest request = new hello.wsdassignment2.domain.order.dto.OrderUpdateRequest();
+        hello.wsdassignment2.domain.order.dto.OrderUpdateRequest.ItemToUpdate itemToUpdate = new hello.wsdassignment2.domain.order.dto.OrderUpdateRequest.ItemToUpdate();
+        itemToUpdate.setOrderItemId(orderItem.getId());
+        itemToUpdate.setCount(newQuantity);
+        request.setItemsToUpdate(List.of(itemToUpdate));
+
+        given(orderRepository.findById(order.getId())).willReturn(Optional.of(order));
+        int initialStock = book.getStockQuantity();
+
+        // when
+        orderService.updateOrder(user.getId(), order.getId(), request);
+
+        // then
+        assertThat(orderItem.getQuantity()).isEqualTo(newQuantity);
+        assertThat(book.getStockQuantity()).isEqualTo(initialStock - stockChange);
+        assertThat(order.getTotalPrice()).isNotEqualTo(new BigDecimal("199.90")); // 19.99 * 10
+    }
+
+    @Test
+    @DisplayName("주문 수정 성공 - 상품 삭제")
+    void updateOrder_Success_DeleteItem() {
+        // given
+        order.updateStatus(OrderStatus.PENDING);
+        OrderItem orderItemToDelete = order.getOrderItems().get(0);
+        ReflectionTestUtils.setField(orderItemToDelete, "id", 1L);
+        int initialBookStock = book.getStockQuantity();
+        int deletedQuantity = orderItemToDelete.getQuantity();
+
+        hello.wsdassignment2.domain.order.dto.OrderUpdateRequest request = new hello.wsdassignment2.domain.order.dto.OrderUpdateRequest();
+        request.setOrderItemIdsToDelete(List.of(orderItemToDelete.getId()));
+
+        given(orderRepository.findById(order.getId())).willReturn(Optional.of(order));
+
+        // when
+        orderService.updateOrder(user.getId(), order.getId(), request);
+
+        // then
+        assertThat(order.getOrderItems()).isEmpty();
+        assertThat(book.getStockQuantity()).isEqualTo(initialBookStock + deletedQuantity);
+        assertThat(order.getTotalPrice()).isEqualTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    @DisplayName("주문 수정 성공 - 상품 추가")
+    void updateOrder_Success_AddItem() {
+        // given
+        order.updateStatus(OrderStatus.PENDING);
+        Book newBook = Book.create("New Book", "summary", "123", BigDecimal.TEN, 50);
+        ReflectionTestUtils.setField(newBook, "id", 2L);
+        int newBookOrderCount = 5;
+
+        hello.wsdassignment2.domain.order.dto.OrderUpdateRequest request = new hello.wsdassignment2.domain.order.dto.OrderUpdateRequest();
+        hello.wsdassignment2.domain.order.dto.OrderUpdateRequest.ItemToAdd itemToAdd = new hello.wsdassignment2.domain.order.dto.OrderUpdateRequest.ItemToAdd();
+        itemToAdd.setBookId(newBook.getId());
+        itemToAdd.setCount(newBookOrderCount);
+        request.setItemsToAdd(List.of(itemToAdd));
+
+        given(orderRepository.findById(order.getId())).willReturn(Optional.of(order));
+        given(bookRepository.findById(newBook.getId())).willReturn(Optional.of(newBook));
+
+        // when
+        orderService.updateOrder(user.getId(), order.getId(), request);
+
+        // then
+        assertThat(order.getOrderItems()).hasSize(2);
+        assertThat(newBook.getStockQuantity()).isEqualTo(50 - newBookOrderCount);
+    }
+
+
+    @Test
+    @DisplayName("주문 수정 실패 - PENDING 상태가 아님")
+    void updateOrder_Fail_NotPending() {
+        // given
+        order.updateStatus(OrderStatus.SHIPPED); // Not PENDING
+        hello.wsdassignment2.domain.order.dto.OrderUpdateRequest request = new hello.wsdassignment2.domain.order.dto.OrderUpdateRequest();
+        given(orderRepository.findById(order.getId())).willReturn(Optional.of(order));
+
+        // when & then
+        assertThatThrownBy(() -> orderService.updateOrder(user.getId(), order.getId(), request))
+                .isInstanceOf(CustomException.class)
+                .extracting("detail")
+                .isEqualTo("대기중인 주문만 수정할 수 있습니다.");
+    }
+
+    @Test
+    @DisplayName("주문 수정 실패 - 소유자가 아님")
+    void updateOrder_Fail_NotOwner() {
+        // given
+        order.updateStatus(OrderStatus.PENDING);
+        Long otherUserId = 99L;
+        hello.wsdassignment2.domain.order.dto.OrderUpdateRequest request = new hello.wsdassignment2.domain.order.dto.OrderUpdateRequest();
+        given(orderRepository.findById(order.getId())).willReturn(Optional.of(order));
+
+        // when & then
+        assertThatThrownBy(() -> orderService.updateOrder(otherUserId, order.getId(), request))
+                .isInstanceOf(CustomException.class)
+                .extracting("detail")
+                .isEqualTo("주문을 수정할 권한이 없습니다.");
+    }
 }
+

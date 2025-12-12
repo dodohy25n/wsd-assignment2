@@ -2,12 +2,13 @@ package hello.wsdassignment2.domain.order.entity;
 
 
 import hello.wsdassignment2.common.entity.BaseEntity;
+import hello.wsdassignment2.common.exception.CustomException;
+import hello.wsdassignment2.common.exception.ErrorCode;
 import hello.wsdassignment2.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,8 +54,24 @@ public class Order extends BaseEntity {
         calculateTotalPrice();
     }
 
+    public void removeOrderItem(OrderItem orderItem) {
+        orderItems.remove(orderItem);
+        calculateTotalPrice();
+    }
+
+    public OrderItem findOrderItemById(Long orderItemId) {
+        return this.orderItems.stream()
+                .filter(item -> item.getId().equals(orderItemId))
+                .findFirst()
+                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "해당 주문에 존재하지 않는 상품입니다."));
+    }
+
+    public boolean isOwnedBy(Long userId) {
+        return this.user.getId().equals(userId);
+    }
+
     // 총 주문 금액 계산
-    private void calculateTotalPrice() {
+    public void calculateTotalPrice() {
         this.totalPrice = orderItems.stream()
                 .map(item -> item.getPriceAtOrder().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -65,6 +82,13 @@ public class Order extends BaseEntity {
         this.status = OrderStatus.CANCELLED;
     }
     
-    // 주문 상태 변경
-    public void setStatus(OrderStatus status) { this.status = status; }
+    public void updateStatus(OrderStatus newStatus) {
+        if (this.status == OrderStatus.CANCELLED) {
+            throw new CustomException(ErrorCode.STATE_CONFLICT, "이미 취소된 주문의 상태는 변경할 수 없습니다.");
+        }
+        if (this.status == OrderStatus.DELIVERED && newStatus != OrderStatus.DELIVERED) {
+            throw new CustomException(ErrorCode.STATE_CONFLICT, "배송 완료된 주문의 상태는 변경할 수 없습니다.");
+        }
+        this.status = newStatus;
+    }
 }
