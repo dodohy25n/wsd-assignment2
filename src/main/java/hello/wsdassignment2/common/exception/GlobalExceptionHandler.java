@@ -1,6 +1,6 @@
 package hello.wsdassignment2.common.exception;
 
-import hello.wsdassignment2.common.response.ApiResponse;
+import hello.wsdassignment2.common.response.CommonResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -23,11 +23,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     // 커스텀 예외 처리
     @ExceptionHandler(CustomException.class)
-    public ResponseEntity<ApiResponse<Void>> handleCustomException(CustomException e, HttpServletRequest request) {
+    public ResponseEntity<CommonResponse<Void>> handleCustomException(CustomException e, HttpServletRequest request) {
         ErrorCode errorCode = e.getErrorCode();
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
-                .body(ApiResponse.error(
+                .body(CommonResponse.error(
                         errorCode.getCode(),
                         errorCode.getMessage(),
                         e.getDetail(), // 상세 정보가 있으면 출력, 없으면 null
@@ -55,7 +55,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         // errors 맵을 함께 전달
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
-                .body(ApiResponse.error(
+                .body(CommonResponse.error(
                         errorCode.getCode(),
                         errorCode.getMessage(),
                         errors, // 상세 에러 정보 주입
@@ -65,14 +65,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     // 그 외 모든 예외 처리
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleAllException(Exception e, HttpServletRequest request) {
+    public ResponseEntity<CommonResponse<Void>> handleAllException(Exception e, HttpServletRequest request) {
         log.error("Unhandled Exception: ", e);
 
         ErrorCode errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
 
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
-                .body(ApiResponse.error(
+                .body(CommonResponse.error(
                         errorCode.getCode(),
                         errorCode.getMessage(),
                         request.getRequestURI()

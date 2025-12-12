@@ -3,7 +3,7 @@ package hello.wsdassignment2.security.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hello.wsdassignment2.common.exception.CustomException;
 import hello.wsdassignment2.common.exception.ErrorCode;
-import hello.wsdassignment2.common.response.ApiResponse;
+import hello.wsdassignment2.common.response.CommonResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -37,7 +37,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
 
     private void handleCustomException(CustomException e, HttpServletResponse response, String requestURI) throws IOException {
         ErrorCode errorCode = e.getErrorCode();
-        ApiResponse<Void> errorResponse = ApiResponse.error(errorCode.getCode(), errorCode.getMessage(), requestURI);
+        CommonResponse<Void> errorResponse = CommonResponse.error(errorCode.getCode(), errorCode.getMessage(), requestURI);
 
         response.setStatus(errorCode.getHttpStatus().value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -47,7 +47,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
 
     private void handleAuthenticationException(HttpServletResponse response, String requestURI) throws IOException {
         ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
-        ApiResponse<Void> errorResponse = ApiResponse.error(errorCode.getCode(), errorCode.getMessage(), requestURI);
+        CommonResponse<Void> errorResponse = CommonResponse.error(errorCode.getCode(), errorCode.getMessage(), requestURI);
 
         response.setStatus(errorCode.getHttpStatus().value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);

@@ -17,7 +17,6 @@ public class BookCreateRequest {
     private String summary;
 
     @NotBlank(message = "ISBN을 입력해주세요.")
-    @Pattern(regexp = "^[0-9]{13}$", message = "ISBN은 13자리 숫자여야 합니다.")
     private String isbn;
 
     @NotNull(message = "가격을 입력해주세요.")
