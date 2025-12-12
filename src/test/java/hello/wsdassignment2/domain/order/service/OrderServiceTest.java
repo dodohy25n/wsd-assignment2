@@ -271,9 +271,9 @@ class OrderServiceTest {
 
         hello.wsdassignment2.domain.order.dto.OrderUpdateRequest request = new hello.wsdassignment2.domain.order.dto.OrderUpdateRequest();
         hello.wsdassignment2.domain.order.dto.OrderUpdateRequest.ItemToUpdate itemToUpdate = new hello.wsdassignment2.domain.order.dto.OrderUpdateRequest.ItemToUpdate();
-        itemToUpdate.setOrderItemId(orderItem.getId());
-        itemToUpdate.setCount(newQuantity);
-        request.setItemsToUpdate(List.of(itemToUpdate));
+        ReflectionTestUtils.setField(itemToUpdate, "orderItemId", orderItem.getId());
+        ReflectionTestUtils.setField(itemToUpdate, "count", newQuantity);
+        ReflectionTestUtils.setField(request, "itemsToUpdate", List.of(itemToUpdate));
 
         given(orderRepository.findById(order.getId())).willReturn(Optional.of(order));
         int initialStock = book.getStockQuantity();
@@ -298,7 +298,7 @@ class OrderServiceTest {
         int deletedQuantity = orderItemToDelete.getQuantity();
 
         hello.wsdassignment2.domain.order.dto.OrderUpdateRequest request = new hello.wsdassignment2.domain.order.dto.OrderUpdateRequest();
-        request.setOrderItemIdsToDelete(List.of(orderItemToDelete.getId()));
+        ReflectionTestUtils.setField(request, "orderItemIdsToDelete", List.of(orderItemToDelete.getId()));
 
         given(orderRepository.findById(order.getId())).willReturn(Optional.of(order));
 
@@ -322,9 +322,9 @@ class OrderServiceTest {
 
         hello.wsdassignment2.domain.order.dto.OrderUpdateRequest request = new hello.wsdassignment2.domain.order.dto.OrderUpdateRequest();
         hello.wsdassignment2.domain.order.dto.OrderUpdateRequest.ItemToAdd itemToAdd = new hello.wsdassignment2.domain.order.dto.OrderUpdateRequest.ItemToAdd();
-        itemToAdd.setBookId(newBook.getId());
-        itemToAdd.setCount(newBookOrderCount);
-        request.setItemsToAdd(List.of(itemToAdd));
+        ReflectionTestUtils.setField(itemToAdd, "bookId", newBook.getId());
+        ReflectionTestUtils.setField(itemToAdd, "count", newBookOrderCount);
+        ReflectionTestUtils.setField(request, "itemsToAdd", List.of(itemToAdd));
 
         given(orderRepository.findById(order.getId())).willReturn(Optional.of(order));
         given(bookRepository.findById(newBook.getId())).willReturn(Optional.of(newBook));

@@ -13,7 +13,6 @@ import java.util.List;
 
 @Schema(description = "주문 등록 요청")
 @Getter
-@Setter
 @NoArgsConstructor
 public class OrderRequest {
 
@@ -24,7 +23,6 @@ public class OrderRequest {
 
     @Schema(description = "주문 상품 정보")
     @Getter
-    @Setter
     @NoArgsConstructor
     public static class OrderItemDTO {
         @Schema(description = "책 ID", example = "1")

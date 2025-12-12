@@ -1,11 +1,13 @@
 package hello.wsdassignment2.domain.book.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
+@Schema(description = "책 생성 요청")
 @Getter
 @NoArgsConstructor
 public class BookCreateRequest {

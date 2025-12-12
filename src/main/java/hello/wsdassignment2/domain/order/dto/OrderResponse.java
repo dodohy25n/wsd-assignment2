@@ -2,6 +2,7 @@ package hello.wsdassignment2.domain.order.dto;
 
 import hello.wsdassignment2.domain.order.entity.Order;
 import hello.wsdassignment2.domain.order.entity.OrderStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Schema(description = "주문 정보 응답")
 @Getter
 public class OrderResponse {
     private final Long id;

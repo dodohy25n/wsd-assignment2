@@ -12,7 +12,6 @@ import java.util.List;
 
 @Schema(description = "주문 수정 요청")
 @Getter
-@Setter
 @NoArgsConstructor
 public class OrderUpdateRequest {
 
@@ -29,7 +28,6 @@ public class OrderUpdateRequest {
 
     @Schema(description = "추가할 상품 정보")
     @Getter
-    @Setter
     @NoArgsConstructor
     public static class ItemToAdd {
         @Schema(description = "상품(책) ID", example = "2")
@@ -43,7 +41,6 @@ public class OrderUpdateRequest {
 
     @Schema(description = "수량 변경 상품 정보")
     @Getter
-    @Setter
     @NoArgsConstructor
     public static class ItemToUpdate {
         @Schema(description = "주문 상품 ID", example = "1")

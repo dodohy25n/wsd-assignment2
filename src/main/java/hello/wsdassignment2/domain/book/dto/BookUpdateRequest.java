@@ -1,5 +1,6 @@
 package hello.wsdassignment2.domain.book.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
@@ -7,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
+@Schema(description = "책 정보 수정 요청")
 @Getter
 @NoArgsConstructor
 public class BookUpdateRequest {

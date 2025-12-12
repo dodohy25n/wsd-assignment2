@@ -34,7 +34,7 @@ public class UserService {
 
     public UserResponse getMyInfo(String username) {
         User user = findByUsernameOrThrow(username);
-        return new UserResponse(user);
+        return UserResponse.from(user);
     }
 
     @Transactional

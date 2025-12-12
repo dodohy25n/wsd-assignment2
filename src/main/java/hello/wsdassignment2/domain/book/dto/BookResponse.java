@@ -1,12 +1,14 @@
 package hello.wsdassignment2.domain.book.dto;
 
 import hello.wsdassignment2.domain.book.entity.Book;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Schema(description = "책 정보 응답")
 @Getter
 public class BookResponse {
     private final Long id;

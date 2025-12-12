@@ -1,12 +1,13 @@
 package hello.wsdassignment2.domain.user.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
 
+@Schema(description = "로그인 응답")
 @Getter
-@Setter
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class LoginResponse {
     private String accessToken;
     private Long expiresIn;

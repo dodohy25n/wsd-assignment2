@@ -41,7 +41,7 @@ public class UserManageController {
             @ParameterObject @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         Page<User> userPage = userManageService.getAllUsers(request, pageable);
-        Page<UserResponse> responsePage = userPage.map(UserResponse::new);
+        Page<UserResponse> responsePage = userPage.map(UserResponse::from);
 
         return ResponseEntity.ok(PagedResponse.success(responsePage));
     }
@@ -56,6 +56,6 @@ public class UserManageController {
     public ResponseEntity<CommonResponse<UserResponse>> getUser(
             @Parameter(description = "조회할 사용자 ID", required = true) @PathVariable Long userId) {
         User user = userManageService.getUser(userId);
-        return ResponseEntity.ok(CommonResponse.success(new UserResponse(user)));
+        return ResponseEntity.ok(CommonResponse.success(UserResponse.from(user)));
     }
 }
