@@ -17,6 +17,11 @@ spring:
       hibernate:
         format_sql: true
         show_sql: true
+  servlet:
+    multipart:
+      max-file-size: 5MB    # 파일 하나당 최대 크기
+      max-request-size: 10MB # 요청 전체(Body) 최대 크기
+
 jwt:
   secret: ${JWT_SECRET}
   access-expiration: 3600000 # 1시간
@@ -25,3 +30,8 @@ jwt:
 springdoc:
   swagger-ui:
     path: /docs
+
+server:
+  tomcat:
+    max-swallow-size: 10MB # 톰캣단에서 제한
+
