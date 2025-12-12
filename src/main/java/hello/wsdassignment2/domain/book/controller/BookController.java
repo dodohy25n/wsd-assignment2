@@ -36,7 +36,7 @@ public class BookController {
     private final BookService bookService;
     private final ReviewService reviewService;
 
-    @Operation(summary = "책 등록 ", description = "새로운 책을 등록합니다. (관리자 권한 필요)")
+    @Operation(summary = "책 등록 ", description = "새로운 책을 등록합니다. ")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "책 등록 성공", useReturnTypeSchema = true),
             @ApiResponse(responseCode = "400", description = "입력값 유효성 검사 실패",
@@ -56,8 +56,7 @@ public class BookController {
     @Operation(summary = "책 단건 조회", description = "ID로 특정 책을 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "책 조회 성공", useReturnTypeSchema = true),
-            @ApiResponse(responseCode = "404", description = "존재하지 않는 책",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 책", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{bookId}")
     public ResponseEntity<CommonResponse<BookResponse>> getBook(
@@ -82,7 +81,7 @@ public class BookController {
         return ResponseEntity.ok(PagedResponse.success(responsePage));
     }
 
-    @Operation(summary = "책 수정 ", description = "기존 책 정보를 수정합니다. (관리자 권한 필요)")
+    @Operation(summary = "책 수정 ", description = "기존 책 정보를 수정합니다. ")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "책 수정 성공", useReturnTypeSchema = true),
             @ApiResponse(responseCode = "400", description = "입력값 유효성 검사 실패",
@@ -100,7 +99,7 @@ public class BookController {
         return ResponseEntity.ok(CommonResponse.success(null));
     }
 
-    @Operation(summary = "책 Soft Delete ", description = "책을 논리적으로 삭제합니다. (관리자 권한 필요)")
+    @Operation(summary = "책 Soft Delete ", description = "책을 논리적으로 삭제합니다. ")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "책 논리적 삭제 성공", useReturnTypeSchema = true),
             @ApiResponse(responseCode = "403", description = "접근 권한 없음",
@@ -115,7 +114,7 @@ public class BookController {
         return ResponseEntity.ok(CommonResponse.success(null));
     }
 
-    @Operation(summary = "책 Hard Delete ", description = "책을 물리적으로 삭제합니다. (관리자 권한 필요)")
+    @Operation(summary = "책 Hard Delete ", description = "책을 물리적으로 삭제합니다. ")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "책 물리적 삭제 성공", useReturnTypeSchema = true),
             @ApiResponse(responseCode = "403", description = "접근 권한 없음",

@@ -26,6 +26,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<CommonResponse<Void>> handleCustomException(CustomException e, HttpServletRequest request) {
         ErrorCode errorCode = e.getErrorCode();
+
+        log.warn("[CustomException] {} - {} ({})", errorCode.getCode(), e.getMessage(), request.getRequestURI());
+
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
                 .body(CommonResponse.error(
@@ -53,6 +56,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ErrorCode errorCode = ErrorCode.VALIDATION_FAILED;
         String path = ((ServletWebRequest) request).getRequest().getRequestURI();
 
+        log.warn("[Validation Failed] {} - {}", path, errors);
+
         // errors 맵을 함께 전달
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
@@ -67,7 +72,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     // [추가 1] 인증 실패 (401) - AuthenticationException
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<CommonResponse<Void>> handleAuthenticationException(AuthenticationException e, HttpServletRequest request) {
-        log.error("Authentication Error: {}", e.getMessage()); // 로그 남기기
+        log.warn("[Authentication Error] {} ({})", e.getMessage(), request.getRequestURI());
 
         ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
         return ResponseEntity
@@ -82,7 +87,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     // [추가 2] 권한 없음 (403) - AccessDeniedException
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<CommonResponse<Void>> handleAccessDeniedException(AccessDeniedException e, HttpServletRequest request) {
-        log.error("Access Denied: {}", e.getMessage());
+        log.error("[Access Denied] {} ({})", e.getMessage(), request.getRequestURI());
 
         ErrorCode errorCode = ErrorCode.FORBIDDEN;
         return ResponseEntity
@@ -97,7 +102,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     // 그 외 모든 예외 처리
     @ExceptionHandler(Exception.class)
     public ResponseEntity<CommonResponse<Void>> handleAllException(Exception e, HttpServletRequest request) {
-        log.error("Unhandled Exception: ", e);
+        log.error("[Internal Server Error] Unhandled Exception occurred at {}", request.getRequestURI(), e);
 
         ErrorCode errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
 

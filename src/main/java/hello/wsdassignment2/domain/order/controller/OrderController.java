@@ -70,7 +70,7 @@ public class OrderController {
         return ResponseEntity.ok(CommonResponse.success(OrderResponse.from(order)));
     }
 
-    @Operation(summary = "주문 목록 조회 ", description = "주문 목록을 조회합니다. (관리자 권한 필요)")
+    @Operation(summary = "주문 목록 조회 ", description = "주문 목록을 조회합니다. ")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "주문 목록 조회 성공", useReturnTypeSchema = true),
             @ApiResponse(responseCode = "403", description = "접근 권한 없음",
