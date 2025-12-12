@@ -45,6 +45,15 @@ public class User extends BaseEntity {
                 .build();
     }
 
+    public void update(String password, String name) {
+        if (password != null) {
+            this.password = password;
+        }
+        if (name != null) {
+            this.name = name;
+        }
+    }
+
     public static User createForAuthentication(Long id, String username, Role role) {
         return User.builder()
                 .id(id)
