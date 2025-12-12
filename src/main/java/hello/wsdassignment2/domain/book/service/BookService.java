@@ -3,10 +3,10 @@ package hello.wsdassignment2.domain.book.service;
 import hello.wsdassignment2.common.exception.CustomException;
 import hello.wsdassignment2.common.exception.ErrorCode;
 import hello.wsdassignment2.domain.book.dto.BookCreateRequest;
+import hello.wsdassignment2.domain.book.dto.BookSearchRequest;
 import hello.wsdassignment2.domain.book.dto.BookUpdateRequest;
 import hello.wsdassignment2.domain.book.entity.Book;
 import hello.wsdassignment2.domain.book.repository.BookRepository;
-import hello.wsdassignment2.domain.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -50,9 +50,8 @@ public class BookService {
     }
 
     // 책 목록 조회
-    public Page<Book> getAllBooks(Pageable pageable) {
-        // deletedAt이 null인 데이터만 페이징 조회
-        return bookRepository.findAllByDeletedAtIsNull(pageable);
+    public Page<Book> getAllBooks(BookSearchRequest request, Pageable pageable) {
+        return bookRepository.searchBooks(request, pageable);
     }
 
     // 책 정보 수정

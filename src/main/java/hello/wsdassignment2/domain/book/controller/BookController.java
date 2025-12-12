@@ -3,10 +3,7 @@ package hello.wsdassignment2.domain.book.controller;
 import hello.wsdassignment2.common.response.CommonResponse;
 import hello.wsdassignment2.common.response.ErrorResponse;
 import hello.wsdassignment2.common.response.PagedResponse;
-import hello.wsdassignment2.domain.book.dto.BookCreateRequest;
-import hello.wsdassignment2.domain.book.dto.BookResponse;
-import hello.wsdassignment2.domain.book.dto.BookStatResponse;
-import hello.wsdassignment2.domain.book.dto.BookUpdateRequest;
+import hello.wsdassignment2.domain.book.dto.*;
 import hello.wsdassignment2.domain.book.entity.Book;
 import hello.wsdassignment2.domain.book.service.BookService;
 import hello.wsdassignment2.domain.review.dto.ReviewResponse;
@@ -69,18 +66,20 @@ public class BookController {
         return ResponseEntity.ok(CommonResponse.success(BookResponse.from(book)));
     }
 
-    @Operation(summary = "책 목록 조회", description = "페이지네이션을 사용하여 모든 책 목록을 조회합니다.")
+    @Operation(summary = "책 목록 조회 (검색/필터)", description = "페이지네이션과 검색 조건을 사용하여 책 목록을 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "책 목록 조회 성공", useReturnTypeSchema = true)
     })
     @GetMapping
-    public ResponseEntity<PagedResponse<BookResponse>> getAllBooks( // 반환 타입 변경
-                                                                    @ParameterObject @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    public ResponseEntity<PagedResponse<BookResponse>> getAllBooks(
+            // @ModelAttribute로 쿼리 파라미터를 DTO에 바인딩
+            @ParameterObject @ModelAttribute BookSearchRequest request,
+            @ParameterObject @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        Page<Book> bookPage = bookService.getAllBooks(pageable);
+        Page<Book> bookPage = bookService.getAllBooks(request, pageable);
         Page<BookResponse> responsePage = bookPage.map(BookResponse::from);
 
-        return ResponseEntity.ok(PagedResponse.success(responsePage)); // PagedResponse 사용
+        return ResponseEntity.ok(PagedResponse.success(responsePage));
     }
 
     @Operation(summary = "책 수정 ", description = "기존 책 정보를 수정합니다. (관리자 권한 필요)")

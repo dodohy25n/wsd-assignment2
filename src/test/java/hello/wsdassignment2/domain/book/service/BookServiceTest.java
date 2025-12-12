@@ -2,6 +2,7 @@ package hello.wsdassignment2.domain.book.service;
 
 import hello.wsdassignment2.common.exception.CustomException;
 import hello.wsdassignment2.domain.book.dto.BookCreateRequest;
+import hello.wsdassignment2.domain.book.dto.BookSearchRequest;
 import hello.wsdassignment2.domain.book.dto.BookUpdateRequest;
 import hello.wsdassignment2.domain.book.entity.Book;
 import hello.wsdassignment2.domain.book.repository.BookRepository;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -98,21 +100,89 @@ class BookServiceTest {
     }
 
     @Test
-    @DisplayName("책 목록 조회 성공")
-    void getAllBooks_Success() {
+    @DisplayName("책 목록 조회 성공: 검색 조건 없음 (전체 조회)")
+    void getAllBooks_Norequest() {
         // given
+        BookSearchRequest request = new BookSearchRequest(); // 빈 조건
         PageRequest pageRequest = PageRequest.of(0, 10);
         List<Book> books = List.of(createBookEntity());
         Page<Book> bookPage = new PageImpl<>(books);
 
-        given(bookRepository.findAllByDeletedAtIsNull(pageRequest)).willReturn(bookPage);
+        given(bookRepository.searchBooks(request, pageRequest)).willReturn(bookPage);
 
         // when
-        Page<Book> result = bookService.getAllBooks(pageRequest);
+        Page<Book> result = bookService.getAllBooks(request, pageRequest);
 
         // then
         assertThat(result.getTotalElements()).isEqualTo(1);
+        verify(bookRepository, times(1)).searchBooks(request, pageRequest);
+    }
+
+    @Test
+    @DisplayName("책 목록 조회 성공: 검색어(keyword) 포함")
+    void getAllBooks_WithKeyword() {
+        // given
+        BookSearchRequest request = new BookSearchRequest();
+        request.setKeyword("Test"); // 검색어 설정
+
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        List<Book> books = List.of(createBookEntity());
+        Page<Book> bookPage = new PageImpl<>(books);
+
+        // Mock: 해당 조건으로 호출되면 결과를 반환하도록 설정
+        given(bookRepository.searchBooks(request, pageRequest)).willReturn(bookPage);
+
+        // when
+        Page<Book> result = bookService.getAllBooks(request, pageRequest);
+
+        // then
+        assertThat(result.getContent()).hasSize(1);
         assertThat(result.getContent().get(0).getTitle()).isEqualTo("Test Title");
+        verify(bookRepository).searchBooks(request, pageRequest);
+    }
+
+    @Test
+    @DisplayName("책 목록 조회 성공: 가격 범위(minPrice, maxPrice) 포함")
+    void getAllBooks_WithPriceRange() {
+        // given
+        BookSearchRequest request = new BookSearchRequest();
+        request.setMinPrice(BigDecimal.valueOf(5000));
+        request.setMaxPrice(BigDecimal.valueOf(15000));
+
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        List<Book> books = List.of(createBookEntity());
+        Page<Book> bookPage = new PageImpl<>(books);
+
+        given(bookRepository.searchBooks(request, pageRequest)).willReturn(bookPage);
+
+        // when
+        Page<Book> result = bookService.getAllBooks(request, pageRequest);
+
+        // then
+        assertThat(result.getContent()).isNotEmpty();
+        verify(bookRepository).searchBooks(request, pageRequest);
+    }
+
+    @Test
+    @DisplayName("책 목록 조회 성공: 결과 없음 (Empty Page)")
+    void getAllBooks_NoResult() {
+        // given
+        BookSearchRequest request = new BookSearchRequest();
+        request.setKeyword("없는 책 제목"); // 결과가 없을 법한 검색어
+
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        // 빈 페이지 반환 Mocking
+        Page<Book> emptyPage = new PageImpl<>(Collections.emptyList());
+
+        given(bookRepository.searchBooks(request, pageRequest)).willReturn(emptyPage);
+
+        // when
+        Page<Book> result = bookService.getAllBooks(request, pageRequest);
+
+        // then
+        assertThat(result.getContent()).isEmpty();
+        assertThat(result.getTotalElements()).isEqualTo(0);
+        verify(bookRepository).searchBooks(request, pageRequest);
     }
 
     @Test
