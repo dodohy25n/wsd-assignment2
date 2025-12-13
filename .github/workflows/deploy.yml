@@ -7,6 +7,29 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: 0000
+          MYSQL_DATABASE: test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
     steps:
     - uses: actions/checkout@v4
     
@@ -20,6 +43,14 @@ jobs:
       run: chmod +x gradlew
       
     - name: Test with Gradle
+      env:
+        DB_HOST: localhost
+        DB_PORT: 3306
+        DB_USER: root
+        DB_PASSWORD: 0000
+        DB_NAME: test
+        REDIS_HOST: localhost
+        REDIS_PORT: 6379
       run: ./gradlew test
 
   deploy:
