@@ -178,7 +178,7 @@
             "stockQuantity": 20,
             "createdAt": "2025-12-12T22:36:45",
             "updatedAt": "2025-12-12T22:36:45"
-        },
+        }
     ],
     "page": {
         "page": 1,
