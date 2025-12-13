@@ -25,48 +25,44 @@ import java.util.Optional;
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
 public class AuthManageController {
-    private final AuthManageService authManageService;
+        private final AuthManageService authManageService;
 
-    @Operation(summary = "전체 리프레시 토큰 목록 조회 ", description = "시스템에 저장된 모든 리프레시 토큰 목록을 조회합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "토큰 목록 조회 성공", useReturnTypeSchema = true),
-            @ApiResponse(responseCode = "403", description = "접근 권한 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @GetMapping("/tokens")
-    public ResponseEntity<CommonResponse<List<RefreshTokenResponse>>> getAllRefreshTokens() {
-        List<RefreshTokenResponse> tokens = authManageService.getAllTokens();
-        return ResponseEntity.ok(CommonResponse.success(tokens));
-    }
+        @Operation(summary = "전체 리프레시 토큰 목록 조회 ", description = "시스템에 저장된 모든 리프레시 토큰 목록을 조회합니다.")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "토큰 목록 조회 성공", useReturnTypeSchema = true),
+                        @ApiResponse(responseCode = "403", description = "접근 권한 없음", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+        })
+        @GetMapping("/tokens")
+        public ResponseEntity<CommonResponse<List<RefreshTokenResponse>>> getAllRefreshTokens() {
+                List<RefreshTokenResponse> tokens = authManageService.getAllTokens();
+                return ResponseEntity.ok(CommonResponse.success(tokens));
+        }
 
-    @Operation(summary = "특정 유저 리프레시 토큰 조회 ", description = "사용자 ID로 특정 사용자의 리프레시 토큰을 조회합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "토큰 조회 성공", useReturnTypeSchema = true),
-            @ApiResponse(responseCode = "403", description = "접근 권한 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "리소스를 찾을 수 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @GetMapping("/tokens/{userId}")
-    public ResponseEntity<CommonResponse<RefreshTokenResponse>> getRefreshToken(
-            @Parameter(description = "조회할 사용자의 ID", required = true) @PathVariable Long userId) {
-        RefreshTokenResponse token = Optional.ofNullable(authManageService.getByUserId(userId))
-                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "해당 사용자의 리프레시 토큰을 찾을 수 없습니다."));
-        return ResponseEntity.ok(CommonResponse.success(token));
-    }
+        @Operation(summary = "특정 유저 리프레시 토큰 조회 ", description = "사용자 ID로 특정 사용자의 리프레시 토큰을 조회합니다.")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "토큰 조회 성공", useReturnTypeSchema = true),
+                        @ApiResponse(responseCode = "403", description = "접근 권한 없음", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+                        @ApiResponse(responseCode = "404", description = "리소스를 찾을 수 없음", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+        })
+        @GetMapping("/tokens/{userId}")
+        public ResponseEntity<CommonResponse<RefreshTokenResponse>> getRefreshToken(
+                        @Parameter(description = "조회할 사용자의 ID", required = true) @PathVariable Long userId) {
+                RefreshTokenResponse token = Optional.ofNullable(authManageService.getByUserId(userId))
+                                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND,
+                                                "해당 사용자의 리프레시 토큰을 찾을 수 없습니다."));
+                return ResponseEntity.ok(CommonResponse.success(token));
+        }
 
-    @Operation(summary = "특정 유저 리프레시 토큰 삭제 ", description = "사용자 ID로 특정 사용자의 리프레시 토큰을 삭제합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "토큰 삭제 성공", useReturnTypeSchema = true),
-            @ApiResponse(responseCode = "403", description = "접근 권한 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "리소스를 찾을 수 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @DeleteMapping("/tokens/{userId}")
-    public ResponseEntity<CommonResponse<Void>> deleteRefreshToken(
-            @Parameter(description = "삭제할 사용자의 ID", required = true) @PathVariable Long userId) {
-        authManageService.delete(userId);
-        return ResponseEntity.ok(CommonResponse.success(null));
-    }
+        @Operation(summary = "특정 유저 리프레시 토큰 삭제 ", description = "사용자 ID로 특정 사용자의 리프레시 토큰을 삭제합니다.")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "토큰 삭제 성공", useReturnTypeSchema = true),
+                        @ApiResponse(responseCode = "403", description = "접근 권한 없음", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+                        @ApiResponse(responseCode = "404", description = "리소스를 찾을 수 없음", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+        })
+        @DeleteMapping("/tokens/{userId}")
+        public ResponseEntity<CommonResponse<Void>> deleteRefreshToken(
+                        @Parameter(description = "삭제할 사용자의 ID", required = true) @PathVariable Long userId) {
+                authManageService.delete(userId);
+                return ResponseEntity.ok(CommonResponse.success(null));
+        }
 }

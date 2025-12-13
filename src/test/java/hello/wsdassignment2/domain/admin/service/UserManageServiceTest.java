@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 class UserManageServiceTest {
@@ -160,6 +161,40 @@ class UserManageServiceTest {
         assertThat(result.getContent()).isEmpty();
         assertThat(result.getTotalElements()).isEqualTo(0);
         verify(userRepository).searchUsers(request, pageRequest);
+    }
+
+    @Test
+    @DisplayName("사용자 삭제 성공")
+    void deleteUser_Success() {
+        // given
+        Long userId = 1L;
+        User user = createUserEntity();
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+
+        // when
+        userManageService.deleteUser(userId);
+
+        // then
+        assertThat(user.getDeletedAt()).isNotNull();
+        verify(userRepository, times(1)).findById(userId);
+        verify(userRepository, times(1)).save(user);
+    }
+
+    @Test
+    @DisplayName("사용자 삭제 실패: 존재하지 않는 사용자")
+    void deleteUser_Fail_NotFound() {
+        // given
+        Long userId = 99L;
+        given(userRepository.findById(userId)).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> userManageService.deleteUser(userId))
+                .isInstanceOf(CustomException.class)
+                .extracting("detail")
+                .isEqualTo("존재하지 않는 사용자입니다.");
+
+        verify(userRepository, times(1)).findById(userId);
+        verify(userRepository, times(0)).save(any(User.class));
     }
 
 

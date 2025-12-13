@@ -26,6 +26,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
         List<User> content = queryFactory
                 .selectFrom(user)
                 .where(
+                        notDeleted(),
                         keywordContains(request.getKeyword()),
                         roleEq(request.getRole())
                 )
@@ -38,6 +39,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
                 .select(user.count())
                 .from(user)
                 .where(
+                        notDeleted(),
                         keywordContains(request.getKeyword()),
                         roleEq(request.getRole())
                 );
@@ -62,5 +64,9 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
         } catch (IllegalArgumentException e) {
             return null;
         }
+    }
+
+    private BooleanExpression notDeleted() {
+        return user.deletedAt.isNull();
     }
 }

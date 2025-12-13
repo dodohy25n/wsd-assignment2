@@ -69,10 +69,8 @@ class OrderServiceTest {
         int orderCount = 5;
         OrderRequest request = createOrderRequest(book.getId(), orderCount);
         int initialStock = book.getStockQuantity();
-        OrderRequest.OrderItemDTO itemDto = request.getItems().get(0);
-
         given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
-        given(bookRepository.findById(itemDto.getBookId())).willReturn(Optional.of(book));
+        given(bookRepository.findAllByIdForUpdate(any())).willReturn(List.of(book));
         given(orderRepository.save(any(Order.class))).willReturn(order);
 
         // when
@@ -92,10 +90,11 @@ class OrderServiceTest {
         given(userRepository.findById(nonExistentUserId)).willReturn(Optional.empty());
 
         // when & then
+        // when & then
         assertThatThrownBy(() -> orderService.createOrder(nonExistentUserId, request))
                 .isInstanceOf(CustomException.class)
-                .extracting("detail") // detail 필드를 꺼내서 검증
-                .isEqualTo("존재하지 않는 사용자입니다.");
+                .extracting("message")
+                .isEqualTo("해당 사용자를 찾을 수 없습니다.");
     }
 
     @Test
@@ -105,7 +104,7 @@ class OrderServiceTest {
         OrderRequest request = createOrderRequest(99L, 5);
         OrderRequest.OrderItemDTO itemDto = request.getItems().get(0);
         given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
-        given(bookRepository.findById(itemDto.getBookId())).willReturn(Optional.empty());
+        given(bookRepository.findAllByIdForUpdate(any())).willReturn(List.of());
 
         // when & then
         assertThatThrownBy(() -> orderService.createOrder(user.getId(), request))
@@ -121,7 +120,7 @@ class OrderServiceTest {
         OrderRequest request = createOrderRequest(book.getId(), 200); // More than stock
         OrderRequest.OrderItemDTO itemDto = request.getItems().get(0);
         given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
-        given(bookRepository.findById(itemDto.getBookId())).willReturn(Optional.of(book));
+        given(bookRepository.findAllByIdForUpdate(any())).willReturn(List.of(book));
 
         // when & then
         assertThatThrownBy(() -> orderService.createOrder(user.getId(), request))
@@ -223,7 +222,6 @@ class OrderServiceTest {
                 .isEqualTo("이미 취소된 주문입니다.");
     }
 
-
     private User createUserEntity() {
         return User.create("testuser", "password", "test@example.com", "Test User");
     }
@@ -234,16 +232,14 @@ class OrderServiceTest {
                 "A book for testing.",
                 "978-0-06-112008-4",
                 new BigDecimal("19.99"),
-                100
-        );
+                100);
     }
 
     private Order createOrderEntity(User user, Book book) {
         Order newOrder = Order.create(user);
         newOrder.updateStatus(OrderStatus.PAID);
         newOrder.addOrderItem(
-                hello.wsdassignment2.domain.order.entity.OrderItem.create(book, 10)
-        );
+                hello.wsdassignment2.domain.order.entity.OrderItem.create(book, 10));
         return newOrder;
     }
 
@@ -327,7 +323,7 @@ class OrderServiceTest {
         ReflectionTestUtils.setField(request, "itemsToAdd", List.of(itemToAdd));
 
         given(orderRepository.findById(order.getId())).willReturn(Optional.of(order));
-        given(bookRepository.findById(newBook.getId())).willReturn(Optional.of(newBook));
+        given(bookRepository.findAllByIdForUpdate(any())).willReturn(List.of(newBook));
 
         // when
         orderService.updateOrder(user.getId(), order.getId(), request);
@@ -336,7 +332,6 @@ class OrderServiceTest {
         assertThat(order.getOrderItems()).hasSize(2);
         assertThat(newBook.getStockQuantity()).isEqualTo(50 - newBookOrderCount);
     }
-
 
     @Test
     @DisplayName("주문 수정 실패 - PENDING 상태가 아님")
@@ -369,4 +364,3 @@ class OrderServiceTest {
                 .isEqualTo("주문을 수정할 권한이 없습니다.");
     }
 }
-

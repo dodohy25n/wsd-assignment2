@@ -31,4 +31,13 @@ public class UserManageService {
         }
         return user;
     }
+
+    @Transactional
+    public void deleteUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "존재하지 않는 사용자입니다."));
+
+        user.delete(); // Soft delete user
+        userRepository.save(user);
+    }
 }

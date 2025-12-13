@@ -29,33 +29,44 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class UserManageController {
 
-    private final UserManageService userManageService;
+        private final UserManageService userManageService;
 
-    @Operation(summary = "사용자 목록 조회 (검색/필터)", description = "페이지네이션과 검색 조건을 사용하여 사용자 목록을 조회합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "사용자 목록 조회 성공", useReturnTypeSchema = true)
-    })
-    @GetMapping
-    public ResponseEntity<PagedResponse<UserResponse>> getAllUsers(
-            @ParameterObject @ModelAttribute UserSearchRequest request,
-            @ParameterObject @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
-    ) {
-        Page<User> userPage = userManageService.getAllUsers(request, pageable);
-        Page<UserResponse> responsePage = userPage.map(UserResponse::from);
+        @Operation(summary = "사용자 목록 조회 (검색/필터)", description = "페이지네이션과 검색 조건을 사용하여 사용자 목록을 조회합니다.")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "사용자 목록 조회 성공", useReturnTypeSchema = true)
+        })
+        @GetMapping
+        public ResponseEntity<PagedResponse<UserResponse>> getAllUsers(
+                        @ParameterObject @ModelAttribute UserSearchRequest request,
+                        @ParameterObject @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+                Page<User> userPage = userManageService.getAllUsers(request, pageable);
+                Page<UserResponse> responsePage = userPage.map(UserResponse::from);
 
-        return ResponseEntity.ok(PagedResponse.success(responsePage));
-    }
+                return ResponseEntity.ok(PagedResponse.success(responsePage));
+        }
 
-    @Operation(summary = "사용자 단건 조회", description = "ID로 특정 사용자를 조회합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "사용자 조회 성공", useReturnTypeSchema = true),
-            @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @GetMapping("/{userId}")
-    public ResponseEntity<CommonResponse<UserResponse>> getUser(
-            @Parameter(description = "조회할 사용자 ID", required = true) @PathVariable Long userId) {
-        User user = userManageService.getUser(userId);
-        return ResponseEntity.ok(CommonResponse.success(UserResponse.from(user)));
-    }
+        @Operation(summary = "사용자 단건 조회", description = "ID로 특정 사용자를 조회합니다.")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "사용자 조회 성공", useReturnTypeSchema = true),
+                        @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+        })
+        @GetMapping("/{userId}")
+        public ResponseEntity<CommonResponse<UserResponse>> getUser(
+                        @Parameter(description = "조회할 사용자 ID", required = true) @PathVariable Long userId) {
+                User user = userManageService.getUser(userId);
+                return ResponseEntity.ok(CommonResponse.success(UserResponse.from(user)));
+        }
+
+        @Operation(summary = "사용자 강제 삭제", description = "관리자 권한으로 특정 사용자를 강제 삭제합니다. (Soft Delete)")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "사용자 삭제 성공", useReturnTypeSchema = true),
+                        @ApiResponse(responseCode = "403", description = "접근 권한 없음", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+                        @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+        })
+        @DeleteMapping("/{userId}")
+        public ResponseEntity<CommonResponse<Void>> deleteUser(
+                        @Parameter(description = "삭제할 사용자 ID", required = true) @PathVariable Long userId) {
+                userManageService.deleteUser(userId);
+                return ResponseEntity.ok(CommonResponse.success(null));
+        }
 }

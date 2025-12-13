@@ -54,6 +54,10 @@ public class User extends BaseEntity {
         }
     }
 
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
     public static User createForAuthentication(Long id, String username, Role role) {
         return User.builder()
                 .id(id)
