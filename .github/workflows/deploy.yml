@@ -96,9 +96,19 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         port: ${{ secrets.SSH_PORT }}
         script: |
+          # Install Docker if not present
+          if ! command -v docker &> /dev/null; then
+            echo "Docker not found. Installing..."
+            curl -fsSL https://get.docker.com -o get-docker.sh
+            sudo sh get-docker.sh
+            # Add user to docker group (takes effect on next login, so we use sudo for now)
+            sudo usermod -aG docker $USER
+          fi
+
           cd ~/wsd-assignment2
-          # Create .env file if missing or update it (scp already handles this, but ensuring env usage)
-          docker-compose -f docker-compose.prod.yml pull
-          docker-compose -f docker-compose.prod.yml down
-          docker-compose -f docker-compose.prod.yml up -d
-          docker image prune -f
+          
+          # Use sudo docker compose (v2)
+          sudo docker compose -f docker-compose.prod.yml pull
+          sudo docker compose -f docker-compose.prod.yml down
+          sudo docker compose -f docker-compose.prod.yml up -d
+          sudo docker image prune -f
