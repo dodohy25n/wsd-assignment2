@@ -3,7 +3,6 @@
 
 -- --------------------------------------------------------
 -- 1. Users 데이터 (10명)
--- 비밀번호는 모두 통일됨
 -- --------------------------------------------------------
 INSERT INTO `user` (username, email, password, name, role, created_at, updated_at) VALUES
 ('admin@bookstore.com', 'admin@bookstore.com', '$2a$10$61RGStMjBUg.R2OKYe5gAO6b0ngrAhtkMnTfnK/mV/Hmrcx0p.e7u', '관리자', 'ROLE_ADMIN', NOW(), NOW()),
@@ -19,7 +18,6 @@ INSERT INTO `user` (username, email, password, name, role, created_at, updated_a
 
 -- --------------------------------------------------------
 -- 2. Book 데이터 (20권)
--- 검색 테스트를 위한 다양한 제목과 카테고리
 -- --------------------------------------------------------
 INSERT INTO `book` (title, summary, isbn, price, stock_quantity, created_at, updated_at) VALUES
 ('헤드 퍼스트 디자인 패턴', '재미있게 배우는 객체지향', 'ISBN-001', 32000, 100, NOW(), NOW()),
@@ -47,52 +45,47 @@ INSERT INTO `book` (title, summary, isbn, price, stock_quantity, created_at, upd
 -- 3. Orders 데이터
 -- --------------------------------------------------------
 INSERT INTO `orders` (user_id, total_price, status, created_at, updated_at)
-SELECT id, 50000, 'COMPLETED', DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY), NOW()
-FROM `user` WHERE role = 'USER';
+SELECT id, 50000, 'DELIVERED', DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY), NOW()
+FROM `user` WHERE role = 'ROLE_USER';
 
 INSERT INTO `orders` (user_id, total_price, status, created_at, updated_at)
-SELECT id, 30000, 'COMPLETED', DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY), NOW()
-FROM `user` WHERE role = 'USER';
+SELECT id, 30000, 'DELIVERED', DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY), NOW()
+FROM `user` WHERE role = 'ROLE_USER';
 
 INSERT INTO `orders` (user_id, total_price, status, created_at, updated_at)
-SELECT id, 75000, 'COMPLETED', DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY), NOW()
-FROM `user` WHERE role = 'USER';
+SELECT id, 75000, 'DELIVERED', DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY), NOW()
+FROM `user` WHERE role = 'ROLE_USER';
 
 INSERT INTO `orders` (user_id, total_price, status, created_at, updated_at)
 SELECT id, 15000, 'CANCELLED', DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY), NOW()
-FROM `user` WHERE role = 'USER';
+FROM `user` WHERE role = 'ROLE_USER';
 
 INSERT INTO `orders` (user_id, total_price, status, created_at, updated_at)
-SELECT id, 42000, 'COMPLETED', DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY), NOW()
-FROM `user` WHERE role = 'USER';
+SELECT id, 42000, 'DELIVERED', DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY), NOW()
+FROM `user` WHERE role = 'ROLE_USER';
 
 INSERT INTO `orders` (user_id, total_price, status, created_at, updated_at)
-SELECT id, 88000, 'SHIPPING', DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY), NOW()
-FROM `user` WHERE role = 'USER';
-
--- 위 SELECT INSERT가 9명 * 6회 = 54건 생성됨.
--- 추가로 50건 정도 더 생성하여 100건 이상 맞춤
-INSERT INTO `orders` (user_id, total_price, status, created_at, updated_at)
-SELECT id, 25000, 'COMPLETED', DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY), NOW()
-FROM `user` WHERE role = 'USER';
+SELECT id, 88000, 'SHIPPED', DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY), NOW()
+FROM `user` WHERE role = 'ROLE_USER';
 
 INSERT INTO `orders` (user_id, total_price, status, created_at, updated_at)
-SELECT id, 36000, 'COMPLETED', DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY), NOW()
-FROM `user` WHERE role = 'USER';
+SELECT id, 25000, 'DELIVERED', DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY), NOW()
+FROM `user` WHERE role = 'ROLE_USER';
 
 INSERT INTO `orders` (user_id, total_price, status, created_at, updated_at)
-SELECT id, 19000, 'COMPLETED', DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY), NOW()
-FROM `user` WHERE role = 'USER';
+SELECT id, 36000, 'DELIVERED', DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY), NOW()
+FROM `user` WHERE role = 'ROLE_USER';
 
 INSERT INTO `orders` (user_id, total_price, status, created_at, updated_at)
-SELECT id, 62000, 'COMPLETED', DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY), NOW()
-FROM `user` WHERE role = 'USER';
+SELECT id, 19000, 'DELIVERED', DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY), NOW()
+FROM `user` WHERE role = 'ROLE_USER';
+
+INSERT INTO `orders` (user_id, total_price, status, created_at, updated_at)
+SELECT id, 62000, 'DELIVERED', DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY), NOW()
+FROM `user` WHERE role = 'ROLE_USER';
 
 -- --------------------------------------------------------
 -- 4. OrderItem 데이터
--- 생성된 모든 주문에 대해 최소 1개 이상의 책을 매핑
--- 서브쿼리를 이용해 모든 order_id에 대해 아이템 생성
--- 중복 발생 시 무시하도록 IGNORE 추가
 -- --------------------------------------------------------
 
 -- 모든 주문에 첫 번째 책(아이템) 추가
@@ -114,32 +107,31 @@ WHERE o.id % 2 = 0;
 
 -- --------------------------------------------------------
 -- 5. Review 데이터 (약 50건)
--- 랜덤한 유저가 랜덤한 책에 대해 리뷰 작성
 -- --------------------------------------------------------
 INSERT INTO `review` (user_id, book_id, rating, content, created_at, updated_at)
 SELECT
-    (SELECT id FROM user WHERE role='USER' ORDER BY RAND() LIMIT 1),
+    (SELECT id FROM user WHERE role='ROLE_USER' ORDER BY RAND() LIMIT 1),
     (SELECT id FROM book ORDER BY RAND() LIMIT 1),
     5, '인생 책입니다. 강력 추천!', NOW(), NOW()
 FROM `user` LIMIT 5;
 
 INSERT INTO `review` (user_id, book_id, rating, content, created_at, updated_at)
 SELECT
-    (SELECT id FROM user WHERE role='USER' ORDER BY RAND() LIMIT 1),
+    (SELECT id FROM user WHERE role='ROLE_USER' ORDER BY RAND() LIMIT 1),
     (SELECT id FROM book ORDER BY RAND() LIMIT 1),
     4, '내용이 알차고 좋습니다.', NOW(), NOW()
 FROM `user` LIMIT 5;
 
 INSERT INTO `review` (user_id, book_id, rating, content, created_at, updated_at)
 SELECT
-    (SELECT id FROM user WHERE role='USER' ORDER BY RAND() LIMIT 1),
+    (SELECT id FROM user WHERE role='ROLE_USER' ORDER BY RAND() LIMIT 1),
     (SELECT id FROM book ORDER BY RAND() LIMIT 1),
     3, '그저 그렇네요. 평범합니다.', NOW(), NOW()
 FROM `user` LIMIT 5;
 
 INSERT INTO `review` (user_id, book_id, rating, content, created_at, updated_at)
 SELECT
-    (SELECT id FROM user WHERE role='USER' ORDER BY RAND() LIMIT 1),
+    (SELECT id FROM user WHERE role='ROLE_USER' ORDER BY RAND() LIMIT 1),
     (SELECT id FROM book ORDER BY RAND() LIMIT 1),
     5, '배송도 빠르고 책 상태도 좋아요.', NOW(), NOW()
 FROM `user` LIMIT 5;
@@ -147,7 +139,7 @@ FROM `user` LIMIT 5;
 -- 위의 20건을 기반으로 반복
 INSERT INTO `review` (user_id, book_id, rating, content, created_at, updated_at)
 SELECT
-    (SELECT id FROM user WHERE role='USER' ORDER BY RAND() LIMIT 1),
+    (SELECT id FROM user WHERE role='ROLE_USER' ORDER BY RAND() LIMIT 1),
     (SELECT id FROM book ORDER BY RAND() LIMIT 1),
     FLOOR(1 + (RAND() * 5)), -- 1~5 랜덤 평점
     '랜덤 리뷰 내용입니다.',

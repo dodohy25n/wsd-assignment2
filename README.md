@@ -43,9 +43,7 @@
    ```
 
 2. **환경 변수 설정**
-
-   - `.env.example` 파일을 복사하여 `.env` 파일을 생성하거나 `application.yml`을 수정하세요.
-   
+ 
    ```bash
    # .env 설정 예시
    DB_HOST=localhost
@@ -321,11 +319,11 @@
 ### 개선 계획
 
 -   **사용자 권한 세분화**:
-    -   현재의 `USER` 권한을 **`AUTHOR`(작가)**와 **`READER`(독자)**로 분리하여 비즈니스 요구사항에 맞는 권한 체계를 구축할 예정입니다.
+    -   현재의 `USER` 권한을 `AUTHOR`(작가)와 `READER`(독자)로 분리하여 비즈니스 요구사항에 맞는 권한 체계를 구축할 예정입니다.
     -   **`AUTHOR`**: 도서 등록, 수정, 삭제 및 본인 도서 관리 기능 접근 가능.
     -   **`READER`**: 도서 조회, 구매, 리뷰 작성 기능만 접근 가능.
 -   **Redis 활용 범위 확장**:
-    -   현재 Refresh Token 관리에만 사용 중인 Redis를 **Rate Limiting (Bucket4j Redis Extension)** 저장소로 확장하여 분산 환경에서도 정확한 요청 제한을 구현할 예정입니다.
+    -   현재 Refresh Token 관리에만 사용 중인 Redis를 Rate Limiting (Bucket4j Redis Extension) 저장소로 확장하여 분산 환경에서도 정확한 요청 제한을 구현할 예정입니다.
     -   `@Cacheable`을 활용해 자주 조회되는 '베스트셀러'나 '카테고리 목록'을 캐싱하여 DB 부하를 줄일 계획입니다.
 
 ---
