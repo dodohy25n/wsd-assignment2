@@ -90,13 +90,40 @@
 
 ## 5. 배포 정보
 
-- **배포 URL**: `http://<JCLOUD_IP>:<PORT>`
-- **Swagger URL**: `http://<JCLOUD_IP>:<PORT>/docs`
-- **Health URL**: `http://<JCLOUD_IP>:<PORT>/health`
+- **배포 URL**: `http://113.198.66.68:10233`
+- **Swagger URL**: `http://113.198.66.68:10233/docs`
+- **Health URL**: `http://113.198.66.68:10233/health`
 
 ---
 
-## 6. 인증 및 권한 (Roles)
+## 6. 인증 플로우
+
+본 프로젝트는 JWT 기반의 인증 방식을 채택하고 있으며, 보안 강화를 위해 Refresh Token Rotation 전략을 사용합니다.
+
+### 1단계: 로그인
+
+1. 클라이언트가 `username`/`password`로 `/api/auth/login` 요청을 보냅니다.
+2. 서버는 DB 검증 후 Access Token (1시간)과 Refresh Token (14일)을 발급합니다.
+3. Refresh Token은 Redis에 `{userId: refreshToken}` 형태로 저장됩니다 (만료 시간 설정)
+4. 클라이언트는 두 토큰을 응답으로 받습니다.
+
+### 2단계: API 요청 
+1. 클라이언트는 API 요청 시 Authorization Header에 `Bearer <Access Token>`을 담아 전송합니다.
+2. `JwtFilter`가 요청을 가로채 토큰의 서명(Signature)과 만료 여부를 검증합니다.
+3. 검증 성공 시 `SecurityContextHolder`에 인증 객체(`Authentication`)를 저장하여 요청을 허용합니다.
+
+### 3단계: 토큰 갱신 (Refresh Token Rotation)
+1. Access Token이 만료되면 클라이언트는 `/api/auth/refresh` 엔드포인트로 Refresh Token을 보냅니다.
+2. 서버는 다음 단계를 거쳐 검증합니다:
+   - 토큰 자체의 유효성 검사 (서명, 만료)
+   - Redis에 저장된 토큰과 일치하는지 확인 (탈취된 토큰 사용 방지)
+3. 검증 성공 시, 새로운 Access Token과 새로운 Refresh Token을 발급합니다.
+4. Redis의 기존 토큰을 삭제하고 새로운 Refresh Token으로 교체합니다.
+   - RTR 효과: Refresh Token이 탈취되더라도 이미 사용된 토큰으로 갱신을 시도하면 Redis 불일치로 인해 차단되므로 보안성이 높습니다.
+
+---
+
+## 7. 인증 및 권한
 
 ### 역할
 
@@ -308,13 +335,39 @@
 
 ---
 
-## 11. 한계점 및 개선 계획
+## 11. 인프라 및 CI/CD 구축
+ 
+GitHub Actions와 Docker를 활용하여 자동화된 배포 파이프라인(CI/CD)을 구축했습니다.
+ 
+### 인프라 아키텍처
+ 
+1. **Container Request**: GitHub Actions가 코드를 빌드하고 Docker Image를 생성하여 Docker Hub에 Push합니다.
+2. **Deploy Trigger**: 배포 서버(JCloud)에 SSH로 접속하여 최신 이미지를 Pull 받고 컨테이너를 재시작합니다.
+3. **Service Orchestration**: `docker-compose`를 사용하여 Spring Boot 앱, MySQL, Redis를 하나의 네트워크로 관리합니다.
+ 
+### CI/CD 파이프라인 (GitHub Actions)
+ 
+| 단계 | 설명 |
+|---|---|
+| **CI (Continuous Integration)** | `main` 브랜치 Push 및 PR 시 트리거됩니다. <br> - **Test**: Gradle 기반 유닛/통합 테스트 수행 (MySQL/Redis 서비스 컨테이너 활용) <br> - **Build**: 애플리케이션 빌드 검증 |
+| **CD (Continuous Deployment)** | `main` 브랜치 Push 시에만 트리거됩니다. <br> - **Login**: Docker Hub 로그인 <br> - **Push**: Docker Image 빌드 및 태킹(`latest`) 후 레지스트리 전송 <br> - **Deploy**: JCloud 서버에 SSH 접속 -> `docker-compose pull` -> `up -d` 실행 |
+
+### 배포 환경 (Docker)
+
+- **Base Image**: `eclipse-temurin:17-jre-jammy`
+- **Multi-stage Build**: 빌드(Gradle)와 실행(JRE) 단계를 분리하여 이미지 크기 최적화
+- **Auto Healing**: `restart: always` 정책을 적용하여 서버 재부팅이나 장애 시 자동 복구
+
+---
+
+## 12. 한계점 및 개선 계획
 
 ### 한계점
 
 -   **단순한 권한 체계**: 현재 `USER`와 `ADMIN` 두 가지 역할만 존재하여, 모든 일반 사용자가 도서를 등록하거나 수정할 수 있는 구조입니다. 실제 서비스에서는 작가와 독자의 권한 분리가 필요합니다.
 -   **Rate Limit 분산 처리 미비**: 현재 Rate Limit 정보가 각 인스턴스의 메모리(`ConcurrentHashMap`)에 저장됩니다. 다중 서버 배포 시 IP 제한이 서버별로 각각 적용되는 한계가 있습니다.
 -   **단일 DB 의존성**: 읽기/쓰기 트래픽이 `MySQL` 단일 인스턴스에 집중되어 있어 대규모 트래픽 발생 시 병목이 생길 수 있습니다.
+-   **배포 시 다운타임 발생**: 현재의 `docker-compose down -> up` 배포 방식은 컨테이너 재시작 시간 동안 서비스 중단이 발생합니다.
 
 ### 개선 계획
 
@@ -325,5 +378,7 @@
 -   **Redis 활용 범위 확장**:
     -   현재 Refresh Token 관리에만 사용 중인 Redis를 Rate Limiting (Bucket4j Redis Extension) 저장소로 확장하여 분산 환경에서도 정확한 요청 제한을 구현할 예정입니다.
     -   `@Cacheable`을 활용해 자주 조회되는 '베스트셀러'나 '카테고리 목록'을 캐싱하여 DB 부하를 줄일 계획입니다.
+-   **인프라 고도화 (CI/CD)**:
+    -   **무중단 배포 도입**: Nginx를 리버스 프록시로 두고 Blue/Green 배포 전략을 적용하여 배포 중 서비스 중단을 제거할 예정입니다.
 
 ---
