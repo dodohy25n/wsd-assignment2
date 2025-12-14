@@ -51,7 +51,7 @@ jobs:
         DB_NAME: test
         REDIS_HOST: localhost
         REDIS_PORT: 6379
-      run: ./gradlew test -Dgradle.wrapper.timeout=60000
+      run: ./gradlew test -Dgradle.wrapper.timeout=70000
 
   deploy:
     needs: build-test
